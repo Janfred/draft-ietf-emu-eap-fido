@@ -1,0 +1,7 @@
+<note title="Discussion Venues" removeInRFC="true">
+<t>Discussion of this document takes place on the
+    Extensible Authentication Protocol Working Group mailing list (eap@frascone.com),
+    which is archived at <eref target="https://mail.frascone.com/pipermail/eap/"/>.</t>
+<t>Source for this draft and an issue tracker can be found at
+    <eref target="https://github.com/Janfred/draft-janfred-eap-fido"/>.</t>
+</note>
