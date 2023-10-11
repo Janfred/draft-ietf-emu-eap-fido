@@ -32,6 +32,10 @@ author:
 
 
 normative:
+  -# https://www.w3.org/TR/2021/REC-webauthn-2-20210408/
+  -# https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html
+  -# https://fidoalliance.org/specs/common-specs/fido-security-ref-v2.1-ps-20220523.html
+  -# https://fidoalliance.org/specs/common-specs/fido-glossary-v2.1-ps-20220523.html
 
 informative:
 
@@ -44,12 +48,90 @@ This document specifies an EAP method leveraging FIDO2 keys for authentication i
 
 # Introduction
 
-TODO Introduction
+The Extensible Authentication Protocol (EAP) {{?RFC3748}} is a widely used standard that allows a server to authenticate a client using different authentication methods.
+There is a huge variety of EAP methods available, that serve different purposes and have different security implications.
+
+Two common EAP methods are EAP-PEAP and EAP-TTLS {{?RFC5281}}, that both use EAP-TLS {{!RFC5216}} to provide confidentiality of the inner authentication.
+This inner authentication is most commonly password-based, meaning that an attacker that manages to compromise the TLS connection can eavesdrop on the authentication and observe the password.
+The authentication of the server to the client within the TLS handshake thus is a vital security function of these EAP methods.
+
+The operational praxis has shown that this is a common problem and security flaw.
+The specification for EAP-TLS {{RFC5214}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
+This standardization gap has lead to user interfaces, where the default setting for certificate validation was set to "Do not validate".
+Even if the validation is active, the supplicant has no implicit information to determine the expected subject name in the server's certificate, so users need to manually configure the expected domain.
+Failure to configure this or not configuring it at all could again lead to an attacker being able to compromise the TLS connection and, as a result, also the password sent in the inner authentication.
+
+There are two major security problems here, that this specification wants to address.
+Firstly, the use of passwords as authentication method implies that the password needs to be sent to the server.
+If an attacker observes this exchange, they can impersonate the user at any time.
+Therefore, this specification uses FIDO authentication, which is based on asymmetric cryptography.
+With this method, even if an attacker is able to compromise the TLS connection, they cannot impersonate the user based on the observed data.
+
+The second major security problem is the specification gap regarding certificate validation.
+With EAP-FIDO, the supplicants now have a clear specification on how to decide wether or not a server certificate is considered valid for the current authentication flow.
+This is achieved by using the trust anchors available on most devices and a method to determine the valid server name based on implicit information of the authentication configuration.
 
 
 # Conventions and Definitions
 
 {::boilerplate bcp14-tagged}
+
+# Overview over the EAP-FIDO protocol
+
+The EAP-FIDO protocol comprises two phases: the TLS handshake phase and FIDO-exchange phase.
+
+During the TLS handshake phase, TLS is used to authenticate the EAP-FIDO server to the client.
+
+During the FIDO-exchange phase, the actual FIDO authentication is executed and the client authenticates itself to the server.
+
+Once the FIDO exchange is completed successfully, the client and server can derive keying material from the TLS handshake phase implicitly.
+
+
+## TLS handshake phase
+
+During the TLS handshake phase, the client and server establish a TLS tunnel.
+This is done using EAP-TLS {{RFC5216}}, {{RFC9190}} with the modifications described in TODO:SECTION LINK.
+As part of the TLS handshake protocol, the EAP-FIDO server will send its certificate along with a chain of certificates leading to the certificate of a trusted CA.
+The client will check this certificate using the rules in TODO:SECTION LINK.
+
+Once the TLS tunnel is established, the client and server proceed to the FIDO-exchange phase to perform the authentication of the client.
+
+## FIDO-exchange phase
+
+In this phase, the TLS record layer is used to securily tunnel information between the EAP-FIDO client and EAP-FIDO server.
+
+For the FIDO-exchange phase, the client has two options, depending on the configuration and the capability of the FIDO token.
+
+If the FIDO token supports residential keys and EAP-FIDO is configured to use these for authentication, the client generates a challenge from the TLS keying material and triggers a FIDO challenge.
+
+If the client is not configured to use residential keys, the client first needs to send its username to the server.
+The server will answer with a list of FIDO key IDs and the client will attempt to use one of these keys to authenticate.
+
+# EAP-FIDO protocol flow
+
+
+
+
+# Implementation Guidelines
+
+# Design decisions
+
+This section documents several design decisions for the EAP-FIDO protocol
+
+## EAP-Method with EAP-TLS vs standalone EAP method to be used in tunnels
+
+Since there already exist EAP methods that provide a TLS tunnel and are capable of encapsulating further EAP methods, e.g. EAP-PEAP or EAP-TTLS, the question arises, why this specification does not focus solely on the FIDO exchange as a standalone EAP method instead of re-specifying a new EAP-method that again makes use of EAP-TLS.
+
+The main reason for a decision against this is the potential for misconfiguration.
+One of the goals for this EAP method is to provide a means to validate the server certificate using implicit configuration options.
+Using EAP-TTLS or EAP-PEAP would counteract this goal, since in most supplicants the configuration for the different phases of the tunneled TLS methods is done seperately, so the users would have to configure the certificate check parameters manually again.
+Additionally, not every supplicant application allows access to information about the phase 1 exchange, namely the server certificate parameters, which is neccessary for the security of the EAP-FIDO exchange.
+Specifying EAP-FIDO as standalone EAP methods would therefore require modifying the EAP-TTLS or EAP-PEAP stack.
+Implementers might be tempted to re-use the insecure and error-prone configuration interfaces.
+To prevent this from the start, EAP-FIDO specifies an EAP-TLS based EAP method that cannot be used standalone.
+
+Although this requires protentially duplicate code for supplicants that support multiple EAP-TLS based methods, the authors believe this means of specification to be more resistant against implementation errors and prevent error-prone user interfaces.
+
 
 
 # Security Considerations
