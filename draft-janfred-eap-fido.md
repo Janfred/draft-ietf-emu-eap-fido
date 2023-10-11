@@ -118,6 +118,52 @@ The server will answer with a list of FIDO key IDs and the client will attempt t
 
 This section documents several design decisions for the EAP-FIDO protocol
 
+## Registration of FIDO2 keys is out of scope
+
+The FIDO CTAP2 protocol has distinct primitives for the registration and the usage of a FIDO2 credential. This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthN protocol in a browser context.
+
+There are multiple degrees of freedom when registering a token with CTAP2. This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
+
+### Discoverable credentials vs. Non-Discoverable credentials
+
+FIDO2 tokens contain a master key which never leaves the security perimeter of the token exists on the device. FIDO2 tokens transact by generating asymetric keypairs which are bound to a scope (often: a domain name, a RADIUS realm). The scoped keying material is saved in either of two locations:
+
+- Non-Discoverable Credentials: All the keying material is stored on the server-side. The private key is encrypted with the token-specific master key so that the server can store, but not use, the device's private key. During authentication transactions, the keying material is sent to the token for local decryption and usage. The security token itself does not store any data persistently; it is stateless and thus the number of keypairs and scopes it manages is infinite.
+
+- Discoverable Credentials: The keying material is stored on the security token itself, along with the scope for which the keypair was generated. During authentication transactions, only the scope (as configured, or as sent by the server) determines which keypair is to be used in the transaction. The key can store multiple keys for the same scope. The number of keypairs that can be stored on the key is finite.
+
+EAP-FIDO supports both Discoverable and Non-Discoverable credentials.
+
+### User involvement during registration
+
+Token registration can involve one of two levels of asserting the user presence:
+
+- UP (userPresence): the registration ceremony ensures that a person is present at the token while registering the device (e.g. human tissue needs to touch a physical security key while the registration transaction executes).
+- UV (userVerification): the security token registers a unique property of the user during the registration ceremony, such that it is asserted that only the exact same person can interact with the token in the future (e.g. by registering a fingerprint or facial recognition)
+
+Note: during authentication transactions, an EAP-FIDO server can request one of three levels of asserting user presence: 
+- Silent (interaction with a human is not required)
+- UP (physical interaction with a person is required)
+- UV (physical interaction with the registered user is required). 
+
+An authentication transaction can not request a higher level than was set at registration time; i.e. a token registered in UP mode can not transact in UV mode.
+
+EAP-FIDO supports all three transaction modes, and the server can signal its required minimum assertion level for each individual authentication transaction.
+
+## FIDO2 key scopes
+
+The scope of a FIDO2 key as set during the registration transaction determines the contexts in which it can be used. In EAP-FIDO, the following three notions interplay:
+
+- the realm of username as used in the EAP-Identity exchange ("outer ID")
+- the servername as presented during the EAP-TLS exchange by the EAP-FIDO server
+- the relyingPartyIdentifier (rpId) that is used during the FIDO CTAP2 client authentication phase
+
+EAP-FIDO requires the registered scope to be:
+
+- identical to the realm in the outer ID
+- within the same second-level domain as the EAP-TLS server certificate will be
+- within the same second-level domain as the FIDO rpId
+
 ## EAP-Method with EAP-TLS vs standalone EAP method to be used in tunnels
 
 Since there already exist EAP methods that provide a TLS tunnel and are capable of encapsulating further EAP methods, e.g. EAP-PEAP or EAP-TTLS, the question arises, why this specification does not focus solely on the FIDO exchange as a standalone EAP method instead of re-specifying a new EAP-method that again makes use of EAP-TLS.
