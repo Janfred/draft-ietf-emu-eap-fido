@@ -140,13 +140,17 @@ This section documents several design decisions for the EAP-FIDO protocol
 
 ## Registration of FIDO2 keys is out of scope
 
-The FIDO CTAP2 protocol has distinct primitives for the registration and the usage of a FIDO2 credential. This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthN protocol in a browser context.
+The FIDO CTAP2 protocol has distinct primitives for the registration and the usage of a FIDO2 credential.
+This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthN protocol in a browser context.
 
-There are multiple degrees of freedom when registering a token with CTAP2. This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
+There are multiple degrees of freedom when registering a token with CTAP2.
+This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
 
 ### Discoverable credentials vs. Non-Discoverable credentials
 
-FIDO2 tokens contain a master key which never leaves the security perimeter of the token exists on the device. FIDO2 tokens transact by generating asymetric keypairs which are bound to a scope (often: a domain name, a RADIUS realm). The scoped keying material is saved in either of two locations:
+FIDO2 tokens contain a master key which never leaves the security perimeter of the token exists on the device.
+FIDO2 tokens transact by generating asymetric keypairs which are bound to a scope (often: a domain name, a RADIUS realm).
+The scoped keying material is saved in either of two locations:
 
 - Non-Discoverable Credentials: All the keying material is stored on the server-side. The private key is encrypted with the token-specific master key so that the server can store, but not use, the device's private key. During authentication transactions, the keying material is sent to the token for local decryption and usage. The security token itself does not store any data persistently; it is stateless and thus the number of keypairs and scopes it manages is infinite.
 
@@ -156,15 +160,15 @@ EAP-FIDO supports both Discoverable and Non-Discoverable credentials.
 
 ### User involvement during registration
 
-Token registration can involve one of two levels of asserting the user presence:
+Token registration can involve one of two levels of asserting the user presence.
 
 - UP (userPresence): the registration ceremony ensures that a person is present at the token while registering the device (e.g. human tissue needs to touch a physical security key while the registration transaction executes).
 - UV (userVerification): the security token registers a unique property of the user during the registration ceremony, such that it is asserted that only the exact same person can interact with the token in the future (e.g. by registering a fingerprint or facial recognition)
 
-Note: during authentication transactions, an EAP-FIDO server can request one of three levels of asserting user presence: 
+During authentication transactions, an EAP-FIDO server can request one of three levels of asserting user presence.
 - Silent (interaction with a human is not required)
 - UP (physical interaction with a person is required)
-- UV (physical interaction with the registered user is required). 
+- UV (physical interaction with the registered user is required).
 
 An authentication transaction can not request a higher level than was set at registration time; i.e. a token registered in UP mode can not transact in UV mode.
 
@@ -172,7 +176,8 @@ EAP-FIDO supports all three transaction modes, and the server can signal its req
 
 ## FIDO2 key scopes
 
-The scope of a FIDO2 key as set during the registration transaction determines the contexts in which it can be used. In EAP-FIDO, the following three notions interplay:
+The scope of a FIDO2 key as set during the registration transaction determines the contexts in which it can be used.
+In EAP-FIDO, the following three notions interplay:
 
 - the realm of username as used in the EAP-Identity exchange ("outer ID")
 - the servername as presented during the EAP-TLS exchange by the EAP-FIDO server
