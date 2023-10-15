@@ -1,14 +1,21 @@
 ---
 title: "EAP-FIDO"
 abbrev: "EAP-FIDO"
-category: info
+category: std
 
 docname: draft-janfred-eap-fido-latest
-submissiontype: independent
+submissiontype: IETF
 v: 3
+area: "Security"
+workgroup: "EAP Method Update"
 keyword:
  - EAP
  - FIDO
+ - TLS
+venue:
+  group: "EAP Method Update"
+  type: "Working Group"
+  mail: "emu@ietf.org"
 
 author:
   - name: Jan-Frederik Rieckers
@@ -29,7 +36,6 @@ author:
     email: stefan.winter@restena.lu
     abbrev: RESTENA
     uri: www.restena.lu
-
 
 normative:
 
@@ -110,7 +116,7 @@ Once the FIDO exchange is completed successfully, the client and server can deri
 ## TLS handshake phase
 
 During the TLS handshake phase, the client and server establish a TLS tunnel.
-This is done using EAP-TLS {{RFC5216}}, {{!RFC9190}} with the modifications described in TODO:SECTION LINK.
+This is done using EAP-TLS {{RFC5216}}, {{!RFC9190}}, {{!RFC9427}} with the modifications described in TODO:SECTION LINK.
 As part of the TLS handshake protocol, the EAP-FIDO server will send its certificate along with a chain of certificates leading to the certificate of a trusted CA.
 The client will check this certificate using the rules in TODO:SECTION LINK.
 
@@ -127,10 +133,47 @@ If the FIDO token supports residential keys and EAP-FIDO is configured to use th
 If the client is not configured to use residential keys, the client first needs to send its username to the server.
 The server will answer with a list of FIDO key IDs and the client will attempt to use one of these keys to authenticate.
 
-# EAP-FIDO protocol flow
+# EAP-FIDO protocol flow and message format
 
+This section describes the preconditions and the configuration needed for EAP-FIDO, the protocol flow and the message format
 
+## Preconditions and Configuration
 
+In order to successfully perform an EAP-FIDO authentication, the server and the client have to meet some preconditions and need to have a configuration.
+
+EAP-FIDO assumes that the FIOD authenticator is already registered with the server, that is, the EAP-FIDO server has access to the public key used to verify the authenticator's response as well as the corresponding credential id.
+
+On the client side, the supplicant must be configured with the Relying Party ID, and, if Passkeys are not used, with a Username.
+
+## TLS handshake
+
+* TLSv1.3 mandatory
+* Certificate Check against publicly trusted CAs
+* Certificate Name Check with RPID
+* SNI?
+
+## FIDO-exchange
+
+* Server sends initial data
+  * RPID?
+  * Auth request level (Silent, up, uv)
+  * Additional Client-Data
+* Choice: Passkey or not?
+  * When Passkey: GOTO "Client sends response"
+* Client sends Username
+* Server sends Key-List
+* Client sends response
+* Choice: Result
+  * When Successful and sufficient:
+    * Protected Success Indicator
+  * When Successful and not sufficient:
+    * Server sends signature request again with more information
+  * When not Successful:
+    * Protected Failure Indicator
+
+### Message format
+
+### Potocol Sequence
 
 # Implementation Guidelines
 
@@ -141,7 +184,7 @@ This section documents several design decisions for the EAP-FIDO protocol
 ## Registration of FIDO2 keys is out of scope
 
 The FIDO CTAP2 protocol has distinct primitives for the registration and the usage of a FIDO2 credential.
-This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthN protocol in a browser context.
+This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthn protocol in a browser context.
 
 There are multiple degrees of freedom when registering a token with CTAP2.
 This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
@@ -166,6 +209,7 @@ Token registration can involve one of two levels of asserting the user presence.
 - UV (userVerification): the security token registers a unique property of the user during the registration ceremony, such that it is asserted that only the exact same person can interact with the token in the future (e.g. by registering a fingerprint or facial recognition)
 
 During authentication transactions, an EAP-FIDO server can request one of three levels of asserting user presence.
+
 - Silent (interaction with a human is not required)
 - UP (physical interaction with a person is required)
 - UV (physical interaction with the registered user is required).
