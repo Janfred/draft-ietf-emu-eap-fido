@@ -32,12 +32,32 @@ author:
 
 
 normative:
-  -# https://www.w3.org/TR/2021/REC-webauthn-2-20210408/
-  -# https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html
-  -# https://fidoalliance.org/specs/common-specs/fido-security-ref-v2.1-ps-20220523.html
-  -# https://fidoalliance.org/specs/common-specs/fido-glossary-v2.1-ps-20220523.html
 
 informative:
+  WebAuthn:
+    title: "Web Authentication: An API for accessing Public Key Credentials Level 2"
+    author:
+      org: World Wide Web Consortium
+    date: 2021-04-08
+    target: https://www.w3.org/TR/2021/REC-webauthn-2-20210408/
+  FIDO-CTAP2:
+    title: Client to Authenticator Protocol (CTAP)
+    author:
+      org: FIDO Alliance
+    date: 2022-06-21
+    target: https://fidoalliance.org/specs/fido-v2.1-ps-20210615/fido-client-to-authenticator-protocol-v2.1-ps-errata-20220621.html
+  FIDO-SecRef:
+    title: FIDO Security Reference
+    author:
+      org: FIDO Alliance
+    date: 2022-05-23
+    target: https://fidoalliance.org/specs/common-specs/fido-security-ref-v2.1-ps-20220523.html
+  FIDO-Glossary:
+    title: FIDO Technical Glossary
+    author:
+      org: FIDO Alliance
+    date: 2022-05-23
+    target: https://fidoalliance.org/specs/common-specs/fido-glossary-v2.1-ps-20220523.html
 
 
 --- abstract
@@ -56,7 +76,7 @@ This inner authentication is most commonly password-based, meaning that an attac
 The authentication of the server to the client within the TLS handshake thus is a vital security function of these EAP methods.
 
 The operational praxis has shown that this is a common problem and security flaw.
-The specification for EAP-TLS {{RFC5214}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
+The specification for EAP-TLS {{RFC5216}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
 This standardization gap has lead to user interfaces, where the default setting for certificate validation was set to "Do not validate".
 Even if the validation is active, the supplicant has no implicit information to determine the expected subject name in the server's certificate, so users need to manually configure the expected domain.
 Failure to configure this or not configuring it at all could again lead to an attacker being able to compromise the TLS connection and, as a result, also the password sent in the inner authentication.
@@ -90,7 +110,7 @@ Once the FIDO exchange is completed successfully, the client and server can deri
 ## TLS handshake phase
 
 During the TLS handshake phase, the client and server establish a TLS tunnel.
-This is done using EAP-TLS {{RFC5216}}, {{RFC9190}} with the modifications described in TODO:SECTION LINK.
+This is done using EAP-TLS {{RFC5216}}, {{!RFC9190}} with the modifications described in TODO:SECTION LINK.
 As part of the TLS handshake protocol, the EAP-FIDO server will send its certificate along with a chain of certificates leading to the certificate of a trusted CA.
 The client will check this certificate using the rules in TODO:SECTION LINK.
 
