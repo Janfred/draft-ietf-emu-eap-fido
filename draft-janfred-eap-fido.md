@@ -147,14 +147,14 @@ EAP-FIDO assumes that the FIOD authenticator is already registered with the serv
 
 On the client side, the supplicant must be configured with the Relying Party ID (see {{openquestions_rpid}}, and, if Passkeys are not used, with a Username.
 
-## TLS handshake
+## TLS handshake phase
 
 The packet format for EAP-FIDO messages follows the format specified in {{RFC5216, Section 3}} with the following modifications:
 
 * The Type field is set to TODO [awaiting IANA early allocation] (EAP-FIDO)
-* Within the Flags field, the Version bits are set to 000 (Version 0). Future EAP-FIDO versions MAY increase the version number.
+* Within the Flags field, the Version bits are set to the major version of EAP-FIDO. For this specification, the version is 0. Future EAP-FIDO versions MAY increase the version number.
 
-### EAP-TLS Start packet
+### EAP-FIDO Start packet
 
 In the first packet from the server to the client, the S-bit of the Flags MUST be set, indicating the start of the EAP-FIDO protocol.
 It MUST NOT be set in any subsequent packet.
@@ -163,18 +163,56 @@ It MUST NOT be set in any subsequent packet.
 
 [^RPID_Option1]: Depending on the decision on the way, the RPID is determined, some additional spec may be added here, see {{openquestions_rpid}}.
 
+### Version negotiation
+
+The version of EAP-FIDO is negotiated in the first exchange between server and client.
+The server sets the highest major version number of EAP-FIDO that it supports in the V field of the flags in its Start message.
+In the case of this specification, this is 0.
+In its first EAP message in response, the client sets the V field to the highest major version number that it supports that is no higher than the version number offered by the server.
+If the client version is not acceptable to the server, it sends an EAP-Failure to terminate the EAP session.
+Otherwise, the version set by the client is the version of EAP-FIDO that MUST be used and both server and client MUST set the V field to that version number in all subsequent EAP messages.
+
+Given the limited range of the V field (values 0-7), future EAP-FIDO versions MUST NOT increase the major version if there are no changes to the outer message format.
+Minor version updates that only affect the inner protocol flow MUST be done with means available during the TLS handshake, i.e. using Application Layer Protocol Negotiation (ALPN).
+
+### Fragmentation
+
+Each EAP-FIDO message contains a single leg of a half-duplex conversation.
+Since EAP carrier protocols may constrain the length of an EAP message, it may be neccessary to fragment an EAP-FIDO message across multiple EAP messages.
+
+The fragmentation method is described in {{RFC5216, Section 2.1.5}}.
+
+### TLS Handshake Requirements
 
 The client and server perform a TLS handshake following the specification in {{RFC5216, Section 2}} and {{RFC9190, Section 2}} with the following modifications:
 
 * TLS version 1.3 or higher MUST be negotiated.
-* Mutual authentication is not required. The client 
+* Mutual authentication is not required. Implementations MUST support EAP-FIDO without TLS client authentication, but MAY allow it, i.e. if EAP-FIDO is used as a 2-Factor authentication method where TLS client certificates are the first factor and the FIDO authentication is the second.
+* The certificate of the server MUST be validated. The different options for validation are listed in {{tls_server_cert_verify}}.
+* (FIXME, depending on RPID option) The client MUST send the desired Relying Party ID for the FIDO exchange in the Server Name Indication extension.
 
-* TLSv1.3 mandatory
-* Certificate Check against publicly trusted CAs
-* Certificate Name Check with RPID
-* SNI?
+### TLS Server Certificate Verification
+{: #tls_server_cert_verify}
+
+(FIXME: Currently only bulletpoints, will be converted into text)
+* Clients MUST support validating against a built-in list of Root CAs, ideally WebPKI.
+* Implementations MAY support pinning a trust anchor
+* The RPID MUST be validated against the certificate name (How exactly is still TODO)
+* TODO: OCSP Stapling? Mandatory or not?
 
 ## FIDO-exchange
+
+After the TLS handshake is completed, the client and server perform the FIDO-exchange to authenticate the client inside the TLS tunnel.
+
+The server sends an authentication request to the client.
+The client then decides if it has sufficient information to perform the FIDO authentication.
+If this is case, the client responds with an authenication response which includes the FIDO response.
+If the client needs additional information, i.e. because it does not use Passkeys and therefore needs a list of Key Identifiers, the client sends an information request to the server, which may include additional information from client to help the server to fulfil the information request, i.e. the inner username.
+If the server receives such an information request it responds with the additional information.
+The client answers then with an authentication response.
+
+Depending on the result of the FIDO authentication, the server MAY choose to trigger a second FIDO authentication with a new authentication request packet.
+
 
 * Server sends initial data
   * RPID?
@@ -195,6 +233,26 @@ The client and server perform a TLS handshake following the specification in {{R
 
 ### Message format
 
+All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with two elements:
+
+type:
+: integer to indicate the message type. {{msgtypes}} contains a list of the different message types.
+
+attributes:
+: a CBOR encoded map with attributes. A list of the different attributes, their assigned mapkey and the type are listed in {{mapkeys}}.
+
+| Type | Description | Sent by |
+|------|-------------|-----------|
+| 0    | Success indicator | Both |
+| 1    | Authentication Request | Server |
+| 2    | Authentication Response | Client |
+| 3    | Information Request | Client |
+{: #msgtypes title="Message types"}
+
+| Mapkey | Type | Label | Description |
+|--------|------|-------|-------------|
+| 1 | ? | ? | ? |
+{: #mapkeys title="Mapkeys for the attributes"}
 ### Potocol Sequence
 
 # Implementation Guidelines
