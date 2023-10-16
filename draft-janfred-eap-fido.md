@@ -72,6 +72,8 @@ This document specifies an EAP method leveraging FIDO2 keys for authentication i
 
 --- middle
 
+{:jf: source="Janfred"}
+
 # Introduction
 
 The Extensible Authentication Protocol (EAP) {{?RFC3748}} is a widely used standard that allows a server to authenticate a client using different authentication methods.
@@ -143,9 +145,29 @@ In order to successfully perform an EAP-FIDO authentication, the server and the 
 
 EAP-FIDO assumes that the FIOD authenticator is already registered with the server, that is, the EAP-FIDO server has access to the public key used to verify the authenticator's response as well as the corresponding credential id.
 
-On the client side, the supplicant must be configured with the Relying Party ID, and, if Passkeys are not used, with a Username.
+On the client side, the supplicant must be configured with the Relying Party ID (see {{openquestions_rpid}}, and, if Passkeys are not used, with a Username.
 
 ## TLS handshake
+
+The packet format for EAP-FIDO messages follows the format specified in {{RFC5216, Section 3}} with the following modifications:
+
+* The Type field is set to TODO [awaiting IANA early allocation] (EAP-FIDO)
+* Within the Flags field, the Version bits are set to 000 (Version 0). Future EAP-FIDO versions MAY increase the version number.
+
+### EAP-TLS Start packet
+
+In the first packet from the server to the client, the S-bit of the Flags MUST be set, indicating the start of the EAP-FIDO protocol.
+It MUST NOT be set in any subsequent packet.
+
+[^RPID_Option1]{:jf}
+
+[^RPID_Option1]: Depending on the decision on the way, the RPID is determined, some additional spec may be added here, see {{openquestions_rpid}}.
+
+
+The client and server perform a TLS handshake following the specification in {{RFC5216, Section 2}} and {{RFC9190, Section 2}} with the following modifications:
+
+* TLS version 1.3 or higher MUST be negotiated.
+* Mutual authentication is not required. The client 
 
 * TLSv1.3 mandatory
 * Certificate Check against publicly trusted CAs
@@ -260,6 +282,46 @@ This document has no IANA actions.
 
 
 --- back
+
+# Open Questions regarding Protocol design
+
+Note to RFC Editor: Remove this section before publication.
+
+Since this specification is an early draft, there are a lot of open questions that we want to get community feedback on.
+
+## How to determine the FIDO Relying Party ID?
+{: #openquestions_rpid}
+
+FIDO needs a relying party ID to function.
+The question is how this RPID is determined, there are several options that all have pros and cons.
+
+### Option 1: Configuration
+The first option would be to just have the RPID as a configuration item, maybe with a default on the realm of the outer username.
+Adding a configuration option complicates the setup of the EAP method, but hopefully not too much.
+A misconfiguration of the RPID is also not that critical from a security standpoint.
+The effects of a misconfigured RPID are only a problem if the used FIDO key is also registered with a third party, in which case the third party could trick the client to connect to a bogous network.
+
+If the RPID deviates from the realm, the client could send the requested RPID using Server Name Indication.
+
+### Option 2: Mandate RPID to equal Realm of the Username
+
+The second option would be to mandate that the RPID is equal to the realm portion of the username.
+This restricts options on how to use EAP-FIDO and may cause unnecessary difficulties in routing, if the convinient routing domain (e.g. the registered domain for a company) should not be used as RPID due to security concerns, or different RPIDs should be used under the same routing realm.
+
+### Option 3: RPID is determined by the server and sent before the TLS handshake
+
+Since the RPID plays an important role in the decision whether or not the certificate sent by the server is to be trusted, the RPID should be determined before the TLS handshake.
+The server could determine the RPID based on the outer username and send it as payload in the EAP-TLS Start packet.
+This way, the client has a clear indication as to whether or not to trust the server certificate sent in the subsequent TLS handshake.
+
+However, this opens up some security issues that are yet to be investigated, since the RPID could be modified by an on-path attacker.
+
+### Option 4: RPID is determined by the server and sent after the TLS handshake
+
+WIth this option, the problem is that the client needs to cache the server certificate in order to determine if the RPID is valid. for the given certificate, unless the rules for certificate verification and RPID determination specify it otherwise.
+One possibility to circumvent this would be to allow the server certificate names and the RPID to deviate, but validate both against the realm of the outer username, e.g. a realm of example.com with a server certificate for radius.example.com and the FIDO RPID fido.example.com.
+
+This, however, adds a whole lot more of security concerns, especially in environments with different independent devisions under the same domain suffix.
 
 # Acknowledgments
 {:numbered="false"}
