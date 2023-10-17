@@ -361,7 +361,7 @@ This message MUST include a PKIDs attribute with only the PKID of the credential
 The client then triggers a new FIDO authentication process and answers with an Authentication Response message.
 
 The server MUST NOT trigger a challenge with the same Public Key Identifier and Authentication Requirements twice.
-The client MAY 
+
 
 * Server sends initial data
   * RPID?
@@ -474,12 +474,55 @@ This document has IANA actions:
 # Example use cases and protocol flows
 
 ## Authentication using Passkeys with silent authentication
+{: #usecases_passkey_silent}
 
 With this use case, the server will send an Authentication Request containing only the Relying Party Id attribute.
 
 The client can trigger the silent authentication with the Passkey stored on the FIDO authenticator and includes the response from the FIDO authenticator into the Authentication Response message.
 
 The server can look up the Public Key Identifier in its database, verify the FIDO signature with the stored public key and, if the signature was valid, send a protected success indicator to the client.
+The client responds with an acknowledgement and the server sends an EAP-Success
+
+## Authentication using Passkeys with silent auth for WiFi and uv auth for VPN
+
+With this use case, the server will modify the Authentication Request based on which RADIUS client (the Wifi Controller or the VPN appliance) sent the request.
+
+If the WiFi appliance sent the request, silent auth is used, and the flow is identical with the previous use case.
+
+If the request came from the VPN appliance (e.g. because the VPN is done via IPSEC with EAP), the server adds "uv" in the Authentication Requirements attribute, which triggers an UV action on the client's side.
+
+The client triggers the Passkey authentication with user verification and responds to the server with the authentication data. The server verifies the signature, sends a success indication, the client acknowledges and the server sends an EAP-Success.
+
+## Authentication with non-residential FIDO keys
+
+In this use case, the FIDO authenticator does not have a Passkey for the Relying Party ID. Instead, the server has a list of Public Key Identifiers stored for each username.
+
+After the initial Authentication Request from the server, the client does not have enough data to trigger the FIDO authentication, so it needs additional information.
+
+The client then sends an Information Request message with its username.
+
+The server looks up the username in its database and sends back a list of Public Key Identifiers it has stored for this user with an Information Response message.
+
+The client can now trigger the FIDO authentication with this list and responds with an Authentication Response, that includes the Public Key Identifier that was actually used for this FIDO authentication.
+
+The server can now verify the signature and client and server finalize the EAP method.
+
+## Authentication with non-residential FIDO keys and user-specific authentication policies
+
+In this use case, different users have different authentication policies, i.e. employees are allowed to use silent authentication, but administrators need an authentication with user presence.
+
+The server starts with an AuthenticationRequest and no authentication requirements or an empty array as authentication requirements.
+The client transmits its identity to the server in the Information Request message.
+Now the server looks up the user and their registered public key identifiers, and checks whether or not user presence verification is neccessary.
+
+If it is necessary, the server includes an authentication requirements attribute with the "up" value along with the PKIDs in the Information Response message.
+Since the client discards any previous attribute values, it now performs a FIDO authentication with user presence, and responds to the server.
+
+## Authentication with mandatory verification after a timespan
+
+
+## Authentication with mandatory verification after a timespan with a grace period
+{: #examples_2hgracetime}
 
 # Open Questions regarding Protocol design
 
