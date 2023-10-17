@@ -247,12 +247,19 @@ attributes:
 | 1    | Authentication Request | Server |
 | 2    | Authentication Response | Client |
 | 3    | Information Request | Client |
+| 4    | Information Response | Server |
 {: #msgtypes title="Message types"}
 
 | Mapkey | Type | Label | Description |
 |--------|------|-------|-------------|
-| 1 | ? | ? | ? |
+| 0 | UTF-8 String | Identity | User Identity (usually username) |
+| 2 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO authenticator |
+| 3 | Byte String | Auth Data | Authdata according to {{WebAuthn, Section 6.1}} |
+| 4 | Byte String | FIDO Signature | |
+| ? | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requiremens, i.e. if user presence or user verification is required |
+| ? | Byte String | PKID | Needed to identify the credential |
 {: #mapkeys title="Mapkeys for the attributes"}
+
 ### Potocol Sequence
 
 # Implementation Guidelines
