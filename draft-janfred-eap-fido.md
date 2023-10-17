@@ -204,7 +204,66 @@ The client and server perform a TLS handshake following the specification in {{R
 
 After the TLS handshake is completed, the client and server perform the FIDO-exchange to authenticate the client inside the TLS tunnel.
 
-The server sends an authentication request to the client.
+This section describes the message format and the protocol flow.
+
+
+### Message format
+
+All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with two elements:
+
+type:
+: integer to indicate the message type. {{msgtypes}} contains a list of the different message types.
+
+attributes:
+: a CBOR encoded map with attributes. A list of the different attributes, their assigned mapkey and the type are listed in {{mapkeys}}.
+
+| Type | Description | Sent by |
+|------|-------------|-----------|
+| -1   | Failure indicator | Both |
+| 0    | Success indicator | Both |
+| 1    | Authentication Request | Server |
+| 2    | Authentication Response | Client |
+| 3    | Information Request | Client |
+| 4    | Information Response | Server |
+{: #msgtypes title="Message types"}
+
+| Mapkey | Type | Label | Description |
+|--------|------|-------|-------------|
+| 0 | UTF-8 String | Identity | User Identity (usually username) |
+| 1 | UTF-8 String | Relying Party ID | See {{openquestions_rpid}} |
+| 2 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO authenticator |
+| 3 | Array of Byte Strings | List of acceptable Public Key Identifiers |
+| 4 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
+| 5 | Byte String | FIDO Signature | |
+| 6 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requiremens, i.e. if user presence or user verification is required |
+| 7 | Byte String | PKID | Needed to identify the credential |
+| 8 | Integer | Error Code | A code describing the error |
+| 9 | UTF-8 String | Error Description | An optional human-readable error description |
+{: #mapkeys title="Mapkeys for the attributes"}
+
+#### Authentication Request
+
+#### Authentication Response
+
+#### Information Request
+
+#### Information Response
+
+#### Success indicator
+
+This message is the protected success indicator, as required by {{RFC9427, Section 5.2}}.
+It is sent by the server to indicate a successfull authentication.
+Since EAP is a strict request-response based protocol, the client needs to reply to this message, so the server can send an EAP-Success message.
+
+
+
+#### Failure indicator
+
+### Potocol Sequence
+
+The FIDO exchange start with the server sending an authentication request to the client.
+This message is sent along with the TLS Server Hello.
+
 The client then decides if it has sufficient information to perform the FIDO authentication.
 If this is case, the client responds with an authenication response which includes the FIDO response.
 If the client needs additional information, i.e. because it does not use Passkeys and therefore needs a list of Key Identifiers, the client sends an information request to the server, which may include additional information from client to help the server to fulfil the information request, i.e. the inner username.
@@ -231,38 +290,9 @@ Depending on the result of the FIDO authentication, the server MAY choose to tri
   * When not Successful:
     * Protected Failure Indicator
 
-### Message format
 
-All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with two elements:
+#### General Protocol sequence
 
-type:
-: integer to indicate the message type. {{msgtypes}} contains a list of the different message types.
-
-attributes:
-: a CBOR encoded map with attributes. A list of the different attributes, their assigned mapkey and the type are listed in {{mapkeys}}.
-
-| Type | Description | Sent by |
-|------|-------------|-----------|
-| 0    | Success indicator | Both |
-| 1    | Authentication Request | Server |
-| 2    | Authentication Response | Client |
-| 3    | Information Request | Client |
-| 4    | Information Response | Server |
-{: #msgtypes title="Message types"}
-
-| Mapkey | Type | Label | Description |
-|--------|------|-------|-------------|
-| 0 | UTF-8 String | Identity | User Identity (usually username) |
-| 1 | UTF-8 String | Relying Party ID | See {{openquestions_rpid}} |
-| 2 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO authenticator |
-| 3 | Array of Byte Strings | List of acceptable Public Key Identifiers |
-| 4 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
-| 5 | Byte String | FIDO Signature | |
-| ? | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requiremens, i.e. if user presence or user verification is required |
-| ? | Byte String | PKID | Needed to identify the credential |
-{: #mapkeys title="Mapkeys for the attributes"}
-
-### Potocol Sequence
 
 # Implementation Guidelines
 
