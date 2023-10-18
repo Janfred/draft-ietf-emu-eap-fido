@@ -362,25 +362,29 @@ The client then triggers a new FIDO authentication process and answers with an A
 
 The server MUST NOT trigger a challenge with the same Public Key Identifier and Authentication Requirements twice.
 
+## FIDO authentication
 
-* Server sends initial data
-  * RPID?
-  * Auth request level (Silent, up, uv)
-  * Additional Client-Data
-* Choice: Passkey or not?
-  * When Passkey: GOTO "Client sends response"
-* Client sends Username
-* Server sends Key-List
-* Client sends response
-* Choice: Result
-  * When Successful and sufficient:
-    * Protected Success Indicator
-  * When Successful and not sufficient:
-    * Server sends signature request again with more information
-  * When not Successful:
-    * Protected Failure Indicator
+This section will describe the actual FIDO authentication process, that is performed between the EAP-FIDO client and the FIDO authenticator.
+
+The client will use CTAP {{FIDO-CTAP2}} to communicate with the authenticator.
+
+The Relying Party ID is configured or sent by the server. For discussion on that see {{openquestions_rpid}}.
+
+The client data is a concatenation of two items.
+
+The first item is derived from the TLS keying material:
+
+    FIDO_CHALLENGE_TLS = TLS-Exporter("fido challenge", NULL, 32)
+
+The second item is the optional additional client data sent by the server.
+
+Both items are concatenated and hashed using SHA-256.
+The result is the clientDataHash for the FIDO authentication.
+
 
 # Implementation Guidelines
+
+TODO
 
 # Design decisions
 
@@ -513,16 +517,45 @@ In this use case, different users have different authentication policies, i.e. e
 
 The server starts with an AuthenticationRequest and no authentication requirements or an empty array as authentication requirements.
 The client transmits its identity to the server in the Information Request message.
-Now the server looks up the user and their registered public key identifiers, and checks whether or not user presence verification is neccessary.
+Now the server looks up the user and their registered public key identifiers, and checks whether or not user presence verification is necessary.
 
 If it is necessary, the server includes an authentication requirements attribute with the "up" value along with the PKIDs in the Information Response message.
 Since the client discards any previous attribute values, it now performs a FIDO authentication with user presence, and responds to the server.
 
 ## Authentication with mandatory verification after a timespan
 
+It may be desired to force a user verification after a timespan, to ensure that the FIDO token is still in possession of the user.
+This timespan is specific for each token, so the check whether or not the token is still allowed to perform only silent authentication can only be done after the authentication has happened.
+
+Given, a user has two registered token, one was verified recently and the other exceeded the verification timespan.
+
+The server start with an authentication request, the client answers with an Information Request and the Identity, the server transmits the Information Response with the two PKIDs and the client performs the silent FIDO authentication with the "expired" FIDO token.
+After sending the Authentication Response, the server verifies the FIDO authentication and recognizes the expired FIDO token.
+Now the server sends a new Authentication Request with the PKID of the expired token and "uv" as Authentication Requirement.
+The client now performs the FIDO authentication again, this time with user verification and sends the Authentication Response to the server.
+The server stores the timestamp of the successful user verification in its database and sends the success indicator.
 
 ## Authentication with mandatory verification after a timespan with a grace period
 {: #examples_2hgracetime}
+
+As with the previous example, in this case the FIDO token again have a token-specific timeout to allow silent authentication for a period of time after a successful user verification.
+Unlike in the previous example, this time there is a grace period that still allows a silent authentication for a while after the timer expired.
+The intention is to not kick out the user in the moment the timer expires, i.e. a user is currently not in the vicinity of the device at that time.
+
+The protocol flow is the same as the previous example, but this time the second Authentication Request from the server cannot be answered from the client, since the user is not performing the user verification.
+Instead, the client will send an Error message with error code TODO (FIDO authentication Timeout).
+
+The server can now decide whether or not the silent authentication is still acceptable. If it is, it answers with a Success Indicator. If not, the server will send a Failure Indicator with the appropriate error code.
+
+## 2FA-AUthentication with client certificate on TLS layer and FIDO in the inner authentication
+
+Since EAP-FIDO uses TLS, it is possible to perform two-factor authentication directly with only EAP-FIDO.
+In this case, the client and server perform mutual authentication at the TLS layer.
+
+The server can now determine the identity of the user based on the certificate and already look up the stored Public Key Identifiers.
+With this lookup, the server can already include the PKIDs in the Authentication Request.
+The client doesn't need to send an Information Request, since it already has all information.
+It can immediately perform the FIDO authentication process and send the Authentication Response to the server.
 
 # Open Questions regarding Protocol design
 
