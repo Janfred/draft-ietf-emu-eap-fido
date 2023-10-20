@@ -335,7 +335,7 @@ This message is sent along with the last message of the server's TLS handshake.
 The Authentication Request can include authentication requirements, additional client data and a list of Public Key Identifiers.
 
 The client then decides if it has sufficient information to perform the FIDO authentication.
-This can be done by probing the FIDO authenticator with all information given in the Authentication Request message..
+This can be done by probing the FIDO authenticator with all information given in the Authentication Request message.
 
 If the FIDO authentication is already possible at this point, the client performs the FIDO authentication process and sends an Authentication Response message with the results from the FIDO authentication to the server.
 This authentication flow can be used if the FIDO authenticator has a Passkey registered for the given Relying Party ID.
@@ -366,7 +366,7 @@ The server MUST NOT trigger a challenge with the same Public Key Identifier and 
 
 This section will describe the actual FIDO authentication process, that is performed between the EAP-FIDO client and the FIDO authenticator.
 
-The client will use CTAP {{FIDO-CTAP2}} to communicate with the authenticator.
+The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with the authenticator.
 
 The Relying Party ID is configured or sent by the server. For discussion on that see {{openquestions_rpid}}.
 
@@ -381,7 +381,6 @@ The second item is the optional additional client data sent by the server.
 Both items are concatenated and hashed using SHA-256.
 The result is the clientDataHash for the FIDO authentication.
 
-
 # Implementation Guidelines
 
 TODO
@@ -392,10 +391,10 @@ This section documents several design decisions for the EAP-FIDO protocol
 
 ## Registration of FIDO2 keys is out of scope
 
-The FIDO CTAP2 protocol has distinct primitives for the registration and the usage of a FIDO2 credential.
+The FIDO CTAP protocol has distinct primitives for the registration and the usage of a FIDO2 credential.
 This specification requires that the registratrion of the security token has been done out-of-band, for example using the WebAuthn protocol in a browser context.
 
-There are multiple degrees of freedom when registering a token with CTAP2.
+There are multiple degrees of freedom when registering a token with CTAP version 2.
 This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
 
 ### Discoverable credentials vs. Non-Discoverable credentials
@@ -434,7 +433,7 @@ In EAP-FIDO, the following three notions interplay:
 
 - the realm of username as used in the EAP-Identity exchange ("outer ID")
 - the servername as presented during the EAP-TLS exchange by the EAP-FIDO server
-- the relyingPartyIdentifier (rpId) that is used during the FIDO CTAP2 client authentication phase
+- the relyingPartyIdentifier (rpId) that is used during the FIDO CTAP client authentication phase
 
 EAP-FIDO requires the registered scope to be:
 
