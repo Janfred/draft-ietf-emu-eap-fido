@@ -368,7 +368,9 @@ This section will describe the actual FIDO authentication process, that is perfo
 
 The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with the authenticator.
 
-The Relying Party ID is configured or sent by the server. For discussion on that see {{openquestions_rpid}}.
+The Relying Party ID  (RPID) either explicitly configured, derived from the RADIUS routing realm, from the server certificate subjectAltName:DNS or sent by the server.
+In analogy to WebAuthn, the client needs to verify that the RPID either matches exactly the subjectAltName:DNS of the certificate or that the subjectAltName is a subdomain of the RPID.
+For discussion on the topic regarding the relationship RPID, SAN and RADIUS Realm, see {{openquestions_rpid}}.
 
 The client data is a concatenation of two items.
 
@@ -566,7 +568,19 @@ Since this specification is an early draft, there are a lot of open questions th
 {: #openquestions_rpid}
 
 FIDO needs a relying party ID to function.
-The question is how this RPID is determined, there are several options that all have pros and cons.
+The question is how this RPID is determined and verified, there are several options that all have pros and cons.
+
+The main thing is to have in mind, that there are three relevant parameters, that need to be put into a certain relationship:
+
+* the RADIUS realm (i.e. 'anonymous@dfn.de')
+* the RPID (i.e. 'eduroam.dfn.de')
+* the Server Certificate Name (usually subjectAltName:DNS, i.e. 'radius.eduroam.dfn.de', in the following abbreviated simply with SAN)
+
+All these three parameters need to be in a pre-defined relationship to allow a simple and hard-to-mess-up-and-still-secure configuration.
+Both the client and the server have to agree on what the RPID is, in order for the FIDO authentication to succeed.
+If there is a defined relationship between the RPID and the certificate name (i.e. SAN needs to be a subrealm of the RPID), then the client needs to verify the certificate against exactly that.
+When does the client do that? What security implications does that bring?
+All these options need some thought.
 
 ### Option 1: Configuration
 The first option would be to just have the RPID as a configuration item, maybe with a default on the realm of the outer username.
@@ -591,7 +605,7 @@ However, this opens up some security issues that are yet to be investigated, sin
 
 ### Option 4: RPID is determined by the server and sent after the TLS handshake
 
-WIth this option, the problem is that the client needs to cache the server certificate in order to determine if the RPID is valid. for the given certificate, unless the rules for certificate verification and RPID determination specify it otherwise.
+With this option, the problem is that the client needs to cache the server certificate in order to determine if the RPID is valid. for the given certificate, unless the rules for certificate verification and RPID determination specify it otherwise.
 One possibility to circumvent this would be to allow the server certificate names and the RPID to deviate, but validate both against the realm of the outer username, e.g. a realm of example.com with a server certificate for radius.example.com and the FIDO RPID fido.example.com.
 
 This, however, adds a whole lot more of security concerns, especially in environments with different independent devisions under the same domain suffix.
