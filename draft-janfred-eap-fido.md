@@ -457,7 +457,15 @@ To prevent this from the start, EAP-FIDO specifies an EAP-TLS based EAP method t
 
 Although this requires protentially duplicate code for supplicants that support multiple EAP-TLS based methods, the authors believe this means of specification to be more resistant against implementation errors and prevent error-prone user interfaces.
 
+# Implementation Status
 
+Note to RFC editor: Remove this section, as well as the reference to {{RFC7942}} before publication
+
+{::boilerplate RFC7942}
+
+There is one proof-of-concept implementation of EAP-FIDO into hostap (hostapd for the server side, wpa_supplicant on the client side) available.
+The implementation was done before the specification of this draft was finished and is therefore not compatible with any draft version, but serves as a proof-of-concept for the overall principle of using FIDO to perform an eduroam login.
+The source code can be found under [https://git.rieckers.it/rieckers/hostap/-/tree/eap_fido_poc_tnc23](https://git.rieckers.it/rieckers/hostap/-/tree/eap_fido_poc_tnc23)
 
 # Security Considerations
 
