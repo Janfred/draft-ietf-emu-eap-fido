@@ -610,6 +610,20 @@ One possibility to circumvent this would be to allow the server certificate name
 
 This, however, adds a whole lot more of security concerns, especially in environments with different independent devisions under the same domain suffix.
 
+# Document Status
+
+Note to RFC Editor: Remove this section before publication.
+
+## Change History
+
+-00: Initial draft version
+
+## Missing Specs
+
+* Error codes and Error handling
+* Key derivation for i.e. WPA2
+  * Will be exported from TLS layer, maybe include some information from the FIDO exchange to bind it to the FIDO exchange?
+
 # Acknowledgments
 {:numbered="false"}
 
