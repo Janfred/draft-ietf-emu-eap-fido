@@ -663,7 +663,13 @@ Note to RFC Editor: Remove this section before publication.
 
 ## Change History
 
--00: Initial draft version
+draft-janfred-eap-fido-00:
+
+> * Initial draft version
+
+draft-janfred-eap-fido-01:
+
+> * Updated terminology to align with the FIDO/WebAuthn terminology
 
 ## Missing Specs
 
