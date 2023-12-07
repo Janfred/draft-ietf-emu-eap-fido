@@ -162,7 +162,7 @@ This section describes the preconditions and the configuration needed for EAP-FI
 
 In order to successfully perform an EAP-FIDO authentication, the server and the client have to meet some preconditions and need to have a configuration.
 
-EAP-FIDO assumes that the FIDO authenticator is already registered with the server, that is, the EAP-FIDO server has access to the public key used to verify the authenticator's response as well as the corresponding credential id.
+EAP-FIDO assumes that the FIDO Authenticator is already registered with the server, that is, the EAP-FIDO server has access to the public key used to verify the authenticator's response as well as the corresponding credential id.
 
 On the client side, the supplicant must be configured with the Relying Party ID (see {{openquestions_rpid}}, and, if Server-Side Credentials are used, with a Username.
 
@@ -253,8 +253,8 @@ attributes:
 |--------|------|-------|-------------|
 | 0 | UTF-8 String | Identity | User Identity (usually username) |
 | 1 | UTF-8 String | Relying Party ID | See {{openquestions_rpid}} |
-| 2 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO authenticator |
-| 3 | Array of Byte Strings | PKIDs | List of acceptable Public Key Identifiers |
+| 2 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO Authenticator |
+| 3 | Array of Byte Strings | PKIDs | List of acceptable Credential IDs |
 | 4 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
 | 5 | Byte String | FIDO Signature | |
 | 6 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requiremens, i.e. if user presence or user verification is required |
@@ -289,10 +289,10 @@ Relying Party ID:
 : The Relying Party ID for the FIDO authentication. See {{openquestions_rpid}}.
 
 Additional Client Data:
-: (Optional) Additional data to be signed by the FIDO authenticator.
+: (Optional) Additional data to be signed by the FIDO Authenticator.
 
 PKIDs:
-: (Optional) A list of acceptable Credential IDs. This can be used to trigger a re-authentication of a specific credential or a list of the Credeital IDs for a specific user, if Server-Side Credentials used.
+: (Optional) A list of acceptable Credential IDs. This can be used to trigger a re-authentication of a specific credential or to provide a list of the Credential IDs for a specific user, if Server-Side Credentials are used.
 
 Authentication Requirements:
 : (Optional) A list of requirements for the FIDO authentication. The possible options for this version of EAP-FIDO are "up" for requesting user presence and "uv" for requesting user verification. Clients MUST ignore any other value, to ensure forward compatibility.
@@ -323,7 +323,7 @@ All three attributes MUST be present in the authentication response message.
 
 If a client does not have sufficient information to perform the FIDO authentication, the client can send an information request message to the server.
 
-This is the case if Server-Side Credentials used, since the FIDO Authenticator needs the list of acceptable credential IDs to access the actual credentials on the FIDO Authenticator.
+This is the case if Server-Side Credentials are used, since the FIDO Authenticator needs the list of acceptable Credential IDs to access the actual credentials on the FIDO Authenticator.
 
 With the information request the client can transmit additional information that help the server to compile this information.
 
@@ -356,17 +356,17 @@ This message is sent along with the last message of the server's TLS handshake.
 The Authentication Request can include authentication requirements, additional client data and a list of Credential IDs.
 
 The client then decides if it has sufficient information to perform the FIDO authentication.
-This can be done by probing the FIDO authenticator with all information given in the Authentication Request message.
+This can be done by probing the FIDO Authenticator with all information given in the Authentication Request message.
 
 If the FIDO authentication is already possible at this point, the client performs the FIDO authentication process and sends an Authentication Response message with the results from the FIDO authentication to the server.
-This authentication flow can be used if the FIDO authenticator has a discoverable credential registered for the given Relying Party ID.
+This authentication flow can be used if the FIDO Authenticator has a Discoverable Credential registered for the given Relying Party ID.
 
-If the client needs additional information, i.e. because it uses non-discoverable credentials and therefore needs a list of Key Identifiers, the client sends an information request to the server, which may include additional information from client to help the server to fulfil the information request.
+If the client needs additional information, i.e. because it uses Server-Side Credentials and therefore needs a list of Credential IDs, the client sends an information request to the server, which may include additional information from client to help the server to fulfil the information request.
 In the current specification, this is namely an identifier, from which the EAP-FIDO server can perform a lookup for all registered FIDO credentials registered to this identifier.
 
-Upon reception of the Information Request message from the client, the server looks up the registered Public Key Identifiers for the given identity.
+Upon reception of the Information Request message from the client, the server looks up the registered Credential IDs for the given identity.
 Depending on the lookup, the requirements for user presence or user verification may change from the previous assumption.
-The found Public Key Identifiers, and optionally also the updated authentication requirements, are then sent with the Information Response back to the client.
+The found Credential IDs, and optionally also the updated authentication requirements, are then sent with the Information Response back to the client.
 
 The client can now, with the additonal information in the Information Response message, perform the FIDO authentication.
 The result of the FIDO authentication is then sent to the Server in an Authentication Response message, which includes the PKID, Auth Data and FIDO Signature from the FIDO authentication result.
@@ -381,11 +381,11 @@ This message MUST include a PKIDs attribute with only the PKID of the credential
 
 The client then triggers a new FIDO authentication process and answers with an Authentication Response message.
 
-The server MUST NOT trigger a challenge with the same Public Key Identifier and Authentication Requirements twice.
+The server MUST NOT trigger a challenge with the same Credential ID and Authentication Requirements twice.
 
 ## FIDO authentication
 
-This section will describe the actual FIDO authentication process, that is performed between the EAP-FIDO client and the FIDO authenticator.
+This section will describe the actual FIDO authentication process, that is performed between the EAP-FIDO client and the FIDO Authenticator.
 
 The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with the authenticator.
 
@@ -420,17 +420,16 @@ This specification requires that the registratrion of the security token has bee
 There are multiple degrees of freedom when registering a token with CTAP version 2.
 This specification recognises the following choices at registration time, and defines how to effectuate an authentication transaction for any combination of these choices.
 
-### Discoverable Credentials vs. Non-Discoverable Credentials
+### Discoverable Credentials vs. Server-Side Credentials
 
-FIDO2 tokens contain a master key which never leaves the security perimeter of the token exists on the device.
+FIDO2 tokens contain a master key which never leaves the security perimeter of the token.
 FIDO2 tokens transact by generating asymetric keypairs which are bound to a scope (often: a domain name, a RADIUS realm).
-The scoped keying material is saved in either of two locations:
+The scoped keying material can be accessed using two diferent methods:
 
-- Non-Discoverable Credentials: All the keying material is stored on the server-side. The private key is encrypted with the token-specific master key so that the server can store, but not use, the device's private key. During authentication transactions, the keying material is sent to the token for local decryption and usage. The security token itself does not store any data persistently; it is stateless and thus the number of keypairs and scopes it manages is infinite.
+- Server-Side Credentials: The keying material is not accessible directly, but only by providing a Credential ID that was generated during registration. Depending on the actual implementation inside the FIDO Authenticator, the Credential ID may be used as a seed to re-generate the specific key pair with the help of the FIDO Authenticator's master key. Other FIDO Authenticator implementations may store the keypair and generate a random Credential ID by which the key can be referenced. To trigger an authentication, the client must provide the correct Credential ID to the FIDO Authenticator. It is fair to assume that the number of Server-Side Credentials that a FIDO Authenticator can generate is not significantly limited, so the number of keys should not weigh in to the consideration whether or not it is worth to register a new Server-Side Credential for a given scope.
+- Discoverable Credentials: The keying material is stored on the security token itself, along with the scope for which the keypair was generated. During authentication transactions, only the scope (as configured, or as sent by the server) determines which keypair is to be used in the transaction. The key can store multiple keys for the same scope. The number of slots for Discoverable Credentials is limited, and this limit needs to be considered when deciding whether or not a new Discoverable Credential should be registered for a specific use case.
 
-- Discoverable Credentials: The keying material is stored on the security token itself, along with the scope for which the keypair was generated. During authentication transactions, only the scope (as configured, or as sent by the server) determines which keypair is to be used in the transaction. The key can store multiple keys for the same scope. The number of keypairs that can be stored on the key is finite.
-
-EAP-FIDO supports both Discoverable and Non-Discoverable Credentials.
+EAP-FIDO supports both Discoverable and Server-Side Credentials.
 
 ### User involvement during registration
 
@@ -507,17 +506,17 @@ This document has IANA actions:
 
 # Example use cases and protocol flows
 
-## Authentication using discoverable credentials with silent authentication
+## Authentication using Discoverable Credentials with silent authentication
 {: #usecases_passkey_silent}
 
 With this use case, the server will send an Authentication Request containing only the Relying Party Id attribute.
 
-The client can trigger the silent authentication with the discoverable credential stored on the FIDO authenticator and includes the response from the FIDO authenticator into the Authentication Response message.
+The client can trigger the silent authentication with the Discoverable Credential stored on the FIDO Authenticator and includes the response from the FIDO Authenticator into the Authentication Response message.
 
-The server can look up the Public Key Identifier in its database, verify the FIDO signature with the stored public key and, if the signature was valid, send a protected success indicator to the client.
+The server can look up the Credential IDs in its database, verify the FIDO signature with the stored public key and, if the signature was valid, send a protected success indicator to the client.
 The client responds with an acknowledgement and the server sends an EAP-Success
 
-## Authentication using discoverable credentials with silent auth for WiFi and uv auth for VPN
+## Authentication using Discoverable Credentials with silent auth for WiFi and uv auth for VPN
 
 With this use case, the server will modify the Authentication Request based on which RADIUS client (the Wifi Controller or the VPN appliance) sent the request.
 
@@ -525,23 +524,23 @@ If the WiFi appliance sent the request, silent auth is used, and the flow is ide
 
 If the request came from the VPN appliance (e.g. because the VPN is done via IPSEC with EAP), the server adds "uv" in the Authentication Requirements attribute, which triggers an UV action on the client's side.
 
-The client triggers the authentication with the discoverable credential with user verification and responds to the server with the authentication data. The server verifies the signature, sends a success indication, the client acknowledges and the server sends an EAP-Success.
+The client triggers the authentication with the Discoverable Credential with user verification and responds to the server with the authentication data. The server verifies the signature, sends a success indication, the client acknowledges and the server sends an EAP-Success.
 
-## Authentication with non-discoverable credentials
+## Authentication with Server-Side Credentials
 
-In this use case, the FIDO authenticator does not have a discoverable credential for the Relying Party ID. Instead, the server has a list of Public Key Identifiers stored for each username.
+In this use case, the FIDO Authenticator does not have a Discoverable Credential for the Relying Party ID. Instead, the server has a list of Credential IDs stored for each username.
 
-After the initial Authentication Request from the server, the client does not have enough data to trigger the FIDO authentication, so it needs additional information.
+After the initial Authentication Request from the server, the client does not have enough data to trigger the FIDO Authentication, so it needs additional information.
 
 The client then sends an Information Request message with its username.
 
-The server looks up the username in its database and sends back a list of Public Key Identifiers it has stored for this user with an Information Response message.
+The server looks up the username in its database and sends back a list of Credential IDs it has stored for this user with an Information Response message.
 
-The client can now trigger the FIDO authentication with this list and responds with an Authentication Response, that includes the Public Key Identifier that was actually used for this FIDO authentication.
+The client can now trigger the FIDO authentication with this list and responds with an Authentication Response, that includes the Credential ID that was actually used for this FIDO authentication.
 
 The server can now verify the signature and client and server finalize the EAP method.
 
-## Authentication with non-discoverable credentials and user-specific authentication policies
+## Authentication with Server-Side Credentials and user-specific authentication policies
 
 In this use case, different users have different authentication policies, i.e. employees are allowed to use silent authentication, but administrators need an authentication with user presence.
 
@@ -585,7 +584,7 @@ If not, meaning that the grace period has expired too, the server will send a Fa
 Since EAP-FIDO uses TLS, it is possible to perform two-factor authentication directly with only EAP-FIDO.
 In this case, the client and server perform mutual authentication at the TLS layer.
 
-The server can now determine the identity of the user based on the certificate and already look up the stored Public Key Identifiers.
+The server can now determine the identity of the user based on the certificate and already look up the stored Credential IDs.
 With this lookup, the server can already include the PKIDs in the Authentication Request.
 The client doesn't need to send an Information Request, since it already has all information.
 It can immediately perform the FIDO authentication process and send the Authentication Response to the server.
@@ -654,7 +653,7 @@ It may be useful to directly include a way to signal in-band that an EAP configu
 
 The idea stems from the discussion at IETF 115 about EAP-DIE {{IETF115-emu-minutes}}.
 
-With EAP-FIDO it may be desirable to also allow for deletion of discoverable credentials. (Maybe residential non-discoverable credentials too?
+With EAP-FIDO it may be desirable to also allow for deletion of Discoverable Credentials. (Maybe residential Server-Side Credentials too?
 
 Input on the need and specific way to achieve this is welcome.
 
