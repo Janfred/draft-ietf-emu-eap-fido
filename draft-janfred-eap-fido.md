@@ -89,19 +89,21 @@ Two common EAP methods are EAP-PEAP and EAP-TTLS {{?RFC5281}}, that both use EAP
 This inner authentication is most commonly password-based, meaning that an attacker that manages to compromise the TLS connection can eavesdrop on the authentication and observe the password.
 The authentication of the server to the client within the TLS handshake thus is a vital security function of these EAP methods.
 
-The operational praxis has shown that this is a common problem and security flaw.
+The operational praxis has shown that this is a common problem and possible flaw.
 The specification for EAP-TLS {{RFC5216}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
-This standardization gap has lead to user interfaces, where the default setting for certificate validation was set to "Do not validate".
-Even if the validation is active, the supplicant has no implicit information to determine the expected subject name in the server's certificate, so users need to manually configure the expected domain.
+Instead it assumes the client has knowledge of the expected server name.
+Since most clients do not have this knowledge beforehand and no implicit way to determine this implicitly from other configuration, this has lead to user interfaces, where the default setting for certificate validation was set to "Do not validate".
+To successfully configure the validation, the users need to know the correct server name.
 Failure to configure this or not configuring it at all could again lead to an attacker being able to compromise the TLS connection and, as a result, also the password sent in the inner authentication.
+Server administrators also need to choose their server certificate based on this and need to communicate the parameters to their users.
 
-There are two major security problems here, that this specification wants to address.
+There are two major issues here, that this specification wants to address.
 Firstly, the use of passwords as authentication method implies that the password needs to be sent to the server.
 If an attacker observes this exchange, they can impersonate the user at any time.
 Therefore, this specification uses FIDO authentication, which is based on asymmetric cryptography.
 With this method, even if an attacker is able to compromise the TLS connection, they cannot impersonate the user based on the observed data.
 
-The second major security problem is the specification gap regarding certificate validation.
+The second major issue is the missing implicit derivation regarding certificate validation.
 With EAP-FIDO, the supplicants now have a clear specification on how to decide wether or not a server certificate is considered valid for the current authentication flow.
 This is achieved by using the trust anchors available on most devices and a method to determine the valid server name based on implicit information of the authentication configuration.
 
