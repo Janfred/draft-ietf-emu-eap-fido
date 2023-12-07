@@ -343,7 +343,7 @@ If an attribute was both present in the Authentication Request and the Informati
 
 #### Error
 
-The Error message signals an error condition on the client side.
+The Error message signals an error condition and can be sent both from client to server and vice versa.
 This error condition does not neccessarily lead to an authentication failure, since the EAP-FIDO server may decide that the previous authentication is sufficient. (See {{examples_2hgracetime}} for an example for this use case)
 
 The attributes field MUST include the attribute Error Code with an error code describing the error and MAY contain an Error Description attribute with a human-readable error description.
@@ -361,7 +361,7 @@ This can be done by probing the FIDO Authenticator with all information given in
 If the FIDO authentication is already possible at this point, the client performs the FIDO authentication process and sends an Authentication Response message with the results from the FIDO authentication to the server.
 This authentication flow can be used if the FIDO Authenticator has a Discoverable Credential registered for the given Relying Party ID.
 
-If the client needs additional information, i.e. because it uses Server-Side Credentials and therefore needs a list of Credential IDs, the client sends an information request to the server, which may include additional information from client to help the server to fulfil the information request.
+If the client needs additional information, i.e. because it uses Server-Side Credentials and therefore needs a list of Credential IDs, the client sends an information request to the server, which includes additional information from client to help the server to fulfil the information request.
 In the current specification, this is namely an identifier, from which the EAP-FIDO server can perform a lookup for all registered FIDO credentials registered to this identifier.
 
 Upon reception of the Information Request message from the client, the server looks up the registered Credential IDs for the given identity.
@@ -430,6 +430,13 @@ The scoped keying material can be accessed using two diferent methods:
 - Discoverable Credentials: The keying material is stored on the security token itself, along with the scope for which the keypair was generated. During authentication transactions, only the scope (as configured, or as sent by the server) determines which keypair is to be used in the transaction. The key can store multiple keys for the same scope. The number of slots for Discoverable Credentials is limited, and this limit needs to be considered when deciding whether or not a new Discoverable Credential should be registered for a specific use case.
 
 EAP-FIDO supports both Discoverable and Server-Side Credentials.
+
+Registering a Discoverable Credential has several advantages and one disadvantage:
+* No username needs to be sent during the authentication transaction
+* The transaction requires less round-trips due to skipping the username transmission process
+* The amount of data sent from EAP server to EAP peer is significantly smaller, reducing the probability of extra roundtrips or packet fragmentation
+* The scopes of the stored credentials can be seen and enumerated by the EAP supplicant, helping the user in finding the right value for configuring the EAP realm
+* The Discoverable Credential consumes space on the FIDO Authenticator, which might be limited
 
 ### User involvement during registration
 
@@ -546,7 +553,7 @@ In this use case, different users have different authentication policies, i.e. e
 
 The server starts with an AuthenticationRequest and no authentication requirements or an empty array as authentication requirements.
 The client transmits its identity to the server in the Information Request message.
-Now the server looks up the user and their registered public key identifiers, and checks whether or not user presence verification is necessary.
+Now the server looks up the user and their registered Credential IDCredential IDss, and checks whether or not user presence verification is necessary.
 
 If it is necessary, the server includes an authentication requirements attribute with the "up" value along with the PKIDs in the Information Response message.
 Since the client discards any previous attribute values, it now performs a FIDO authentication with user presence, and responds to the server.
@@ -680,4 +687,4 @@ draft-janfred-eap-fido-01:
 # Acknowledgments
 {:numbered="false"}
 
-TODO acknowledge.
+The document authors want to thank Alexander Clouter for the idea of a default authentication server name.
