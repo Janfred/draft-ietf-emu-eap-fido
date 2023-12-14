@@ -501,6 +501,15 @@ The source code can be found under [https://git.rieckers.it/rieckers/hostap/-/tr
 
 TODO Security
 
+# Deployment Considerations
+
+## Token Registration with User Presence vs. User Verification
+
+In many use cases, it is desirable for a deployer to attribute an authentication transaction to a specific individual on an ongoing basis. If this ongoing attribution is important, tokens need to be registered in User Verification (UV) mode:
+
+A token which is registered with User Presence (UP) only does not allow to ascertain the binding to a specific individual on an ongoing basis: the registration process makes sure that the token belongs to an authorized user initially at registration time - but this individual may transfer the token to other individuals post-registration. Such other individuals will be trivially able to complete an eventual UP challenge in the future, because UP challenges do not involve a personal authentication factor. Examples of such transfers include a physical hand-over of a USB Security Token, and sharing the credential of a platform authenticator using AirDrop.
+
+A token which is registered with User Verification (UV) on the contrary can be issued a UV challenge, which will require the personal authentication factor used during registration (e.g. PIN, biometric). While it may still be possible to transfer the token along with the authentication factor (say, USB Security Token and associated PIN), this behaviour is then equivalent to directly sharing the password in password-based EAP types. This has a higher psychological barrier, is a known problem, and can be sanctioned by the deployer in the same way as traditional password sharing is.
 
 # IANA Considerations
 
