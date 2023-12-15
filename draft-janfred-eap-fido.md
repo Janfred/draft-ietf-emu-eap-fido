@@ -503,13 +503,25 @@ TODO Security
 
 # Deployment Considerations
 
+This section will list considerations for deploying EAP-FIDO.
+It is intended to help local administrators to decide which parameters should be used in their deployment and give a brief overview over our suggested best practices.
+
 ## Token Registration with User Presence vs. User Verification
 
-In many use cases, it is desirable for a deployer to attribute an authentication transaction to a specific individual on an ongoing basis. If this ongoing attribution is important, tokens need to be registered in User Verification (UV) mode:
+In many use cases, it is desirable for a deployer to attribute an authentication transaction to a specific individual on an ongoing basis.
+If this ongoing attribution is important, tokens need to be registered in User Verification (UV) mode.
 
-A token which is registered with User Presence (UP) only does not allow to ascertain the binding to a specific individual on an ongoing basis: the registration process makes sure that the token belongs to an authorized user initially at registration time - but this individual may transfer the token to other individuals post-registration. Such other individuals will be trivially able to complete an eventual UP challenge in the future, because UP challenges do not involve a personal authentication factor. Examples of such transfers include a physical hand-over of a USB Security Token, and sharing the credential of a platform authenticator using AirDrop.
+A token which is registered with User Presence (UP) only does not allow to ascertain the binding to a specific individual on an ongoing basis.
+The registration process makes sure that the token belongs to an authorized user initially at registration time - but this individual may transfer the token to other individuals post-registration, either by concious decision or by accident.
+The new owner will be trivially able to complete an eventual UP challenge in the future, because UP challenges do not involve a personal authentication factor.
+Examples of such transfers include a physical hand-over of a USB Security Token, sharing the credential of a platform authenticator using AirDrop or theft of a device.
 
-A token which is registered with User Verification (UV) on the contrary can be issued a UV challenge, which will require the personal authentication factor used during registration (e.g. PIN, biometric). While it may still be possible to transfer the token along with the authentication factor (say, USB Security Token and associated PIN), this behaviour is then equivalent to directly sharing the password in password-based EAP types. This has a higher psychological barrier, is a known problem, and can be sanctioned by the deployer in the same way as traditional password sharing is.
+A token which is registered with User Verification (UV) on the contrary can be issued a UV challenge, which will require the personal authentication factor used during registration (e.g. PIN, biometric).
+While it may still be possible to transfer the token along with the authentication factor (say, USB Security Token and associated PIN), this behaviour is then equivalent to directly sharing the password in password-based EAP types or the private key of a Client Certificate for certificate based login.
+This has a higher psychological barrier, is a known problem, and can be sanctioned by the deployer in the same way as traditional password sharing is.
+Additionally, this prevents an attacker that came into possession of the FIDO token without consent/knowledge of the original owner from completing UV challenges, since they are missing the required verification credential (i.e. PIN or biometric).
+
+We want to emphesize that preventing users from transfering ownership is only possible if the used FIDO keys require biometric authentication and this can not be circumvented (i.e. by a backup-PIN or a PIN-based mechanism to add new fingerprints).
 
 # IANA Considerations
 
