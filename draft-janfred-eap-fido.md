@@ -92,10 +92,12 @@ The authentication of the server to the client within the TLS handshake thus is 
 The operational praxis has shown that this is a common problem and possible flaw.
 The specification for EAP-TLS {{RFC5216}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
 Instead it assumes the client has knowledge of the expected server name.
-Since most clients do not have this knowledge beforehand and no implicit way to determine this implicitly from other configuration, this has lead to user interfaces, where the default setting for certificate validation was set to "Do not validate".
-To successfully configure the validation, the users need to know the correct server name.
-Failure to configure this or not configuring it at all could again lead to an attacker being able to compromise the TLS connection and, as a result, also the password sent in the inner authentication.
-Server administrators also need to choose their server certificate based on this and need to communicate the parameters to their users.
+This assumption is reasonable, if all devices are managed centrally and the administrators can easily know and configure all security-relevant parameters in advance.
+Devices in BYOD-environments like eduroam are not managed, so administrators cannot push the desired configuration on the devices, but instead have to rely on the users to configure their devices accordingly.
+This implies that the administrators are aware of all needed configuration items, provide the users with all this information, and the users must follow these guides.
+Failure to configure the parameters correctly will result in connection failure, and frustration, first on the user's end, then on the side of the help desk, that has to deal with the users' problems.
+If the user tries to omit these parameters and the implementation allows a fallback to just omitting the validation, the device will simply work, but now be dangerously susceptible to attacks, e.g. by rouge access points with the same SSID, to which the client will send their password to, regardless of the presented server certificate.
+The second outcome is especially dangerous, because the operator cannot easily check whether the device correctly performed the certificate check, and since the connection just works, the user will not suspect that their local configuration is faulty.
 
 There are two major issues here, that this specification wants to address.
 Firstly, the use of passwords as authentication method implies that the password needs to be sent to the server.
@@ -259,7 +261,7 @@ attributes:
 | 3 | Array of Byte Strings | PKIDs | List of acceptable Credential IDs |
 | 4 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
 | 5 | Byte String | FIDO Signature | |
-| 6 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requiremens, i.e. if user presence or user verification is required |
+| 6 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, i.e. if user presence or user verification is required |
 | 7 | Byte String | PKID | Needed to identify the credential |
 | 8 | Integer | Error Code | A code describing the error |
 | 9 | UTF-8 String | Error Description | An optional human-readable error description |
@@ -512,16 +514,16 @@ In many use cases, it is desirable for a deployer to attribute an authentication
 If this ongoing attribution is important, tokens need to be registered in User Verification (UV) mode.
 
 A token which is registered with User Presence (UP) only does not allow to ascertain the binding to a specific individual on an ongoing basis.
-The registration process makes sure that the token belongs to an authorized user initially at registration time - but this individual may transfer the token to other individuals post-registration, either by concious decision or by accident.
+The registration process makes sure that the token belongs to an authorized user initially at registration time - but this individual may transfer the token to other individuals post-registration, either by conscious decision or by accident.
 The new owner will be trivially able to complete an eventual UP challenge in the future, because UP challenges do not involve a personal authentication factor.
 Examples of such transfers include a physical hand-over of a USB Security Token, sharing the credential of a platform authenticator using AirDrop or theft of a device.
 
 A token which is registered with User Verification (UV) on the contrary can be issued a UV challenge, which will require the personal authentication factor used during registration (e.g. PIN, biometric).
-While it may still be possible to transfer the token along with the authentication factor (say, USB Security Token and associated PIN), this behaviour is then equivalent to directly sharing the password in password-based EAP types or the private key of a Client Certificate for certificate based login.
+While it may still be possible to transfer the token along with the authentication factor (say, USB Security Token and associated PIN), this behavior is then equivalent to directly sharing the password in password-based EAP types or the private key of a Client Certificate for certificate based login.
 This has a higher psychological barrier, is a known problem, and can be sanctioned by the deployer in the same way as traditional password sharing is.
 Additionally, this prevents an attacker that came into possession of the FIDO token without consent/knowledge of the original owner from completing UV challenges, since they are missing the required verification credential (i.e. PIN or biometric).
 
-We want to emphesize that preventing users from transfering ownership is only possible if the used FIDO keys require biometric authentication and this can not be circumvented (i.e. by a backup-PIN or a PIN-based mechanism to add new fingerprints).
+We want to emphasize that preventing users from transferring ownership is only possible if the used FIDO keys require biometric authentication and this can not be circumvented (i.e. by a backup-PIN or a PIN-based mechanism to add new fingerprints).
 
 # IANA Considerations
 
@@ -601,7 +603,7 @@ The server stores the timestamp of the successful user verification in its datab
 As with the previous example, in this case the FIDO token again have a token-specific timeout to allow silent authentication for a period of time after a successful user verification.
 Unlike in the previous example, this time there is a grace period that still allows a silent authentication for a while after the timer expired.
 The intention is to not kick out the user in the moment the timer expires, i.e. a user is currently not in the vicinity of the device at that time, but one would not want to kick out the user if it needs to reconnect due to poor wifi performance.
-Instead, the user may choose a convinient time to verify their identity/presence within this grace period.
+Instead, the user may choose a convenient time to verify their identity/presence within this grace period.
 
 The protocol flow is the same as the previous example, but this time the second Authentication Request from the server cannot be answered from the client, since the user is not performing the user verification.
 Instead, the client will send an Error message with error code TODO (FIDO authentication Timeout).
@@ -648,7 +650,7 @@ All these options need some thought.
 The first option would be to just have the RPID as a configuration item, maybe with a default on the realm of the outer username.
 Adding a configuration option complicates the setup of the EAP method, but hopefully not too much.
 A misconfiguration of the RPID is also not that critical from a security standpoint.
-The effects of a misconfigured RPID are only a problem if the used FIDO key is also registered with a third party, in which case the third party could trick the client to connect to a bogous network.
+The effects of a misconfigured RPID are only a problem if the used FIDO key is also registered with a third party, in which case the third party could trick the client to connect to a bogus network.
 
 If the RPID deviates from the realm, the client could send the requested RPID using Server Name Indication.
 
