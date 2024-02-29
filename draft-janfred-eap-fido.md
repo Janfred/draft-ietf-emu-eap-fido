@@ -176,12 +176,14 @@ To better distinguish the server and client configuration items all server confi
 The EAP-FIDO server configuration comprises of the following configuration items.
 
 `S_FIDO_RPID`:
-: The FIDO Relying Party ID to use for checking the FIDO assertion.  
+: The FIDO Relying Party ID to use for checking the FIDO assertion.
+
 : This value must be a valid domain string as specified in {{WebAuthn}}. The value of `S_FIDO_RPID` MAY be derived dynamically for each authentication flow from the realm part of the NAI.
   However, administrators SHOULD set this configuration option to an explicit value, because client and server MUST agree on the same RPID, otherwise the signature check will fail.
 
 `S_TLS_SERVER_CERT`:
-: The certificate used for the EAP-TLS layer.  
+: The certificate used for the EAP-TLS layer.
+
 : The certificate SHOULD include a SubjectAltName:dnsName for the domain `eap-fido-authentication.<S_FIDO_RPID>` (See {{tls_server_cert_verify}})
 
 Additionally, the server needs access to a database of FIDO credentials.
@@ -197,11 +199,13 @@ Depending on the usecase and other requirements, different fields are needed in 
 
 Depending on the use case, the database may have additional fields that save the last successful authentication with User Verification or User Presence, in order to implement time-dependent policies ( see {{usecase_mandatory_verification_after_time}} for an example)
 
-Remarks:  
+Remarks:
+
 1: The username may not be needed in cases where an identification of the individual user is not neccessary and Discoverable Credentials are used.
 Server-Side Credentials need a hint to the user, since the server must send a list of possible PKIDs to the client.
 For Discoverable Credentials, this is not needed.
-If a server administrator does not care about the identity of the user or has other means to identify a user based on the used PKID, i.e. because the mapping is stored in a seperate database, the EAP-FIDO server does not need access to this information.  
+If a server administrator does not care about the identity of the user or has other means to identify a user based on the used PKID, i.e. because the mapping is stored in a seperate database, the EAP-FIDO server does not need access to this information.
+
 2: If present, the signCount field SHOULD be writable to the EAP-FIDO server. The signCount functionality is intended to have a means for the server to detect when a credential was cloned and two instances are used in parallel.
 The value is strictly monotonically increasing for each FIDO Authenticator, so if at some point a signCount is transmitted that is smaller than or equal to the saved signCount, a second FIDO Authenticor is potentially using the same credential.
 How servers deal with such case is outside of the scope of this specification.
@@ -221,24 +225,29 @@ If the server relies on Server-Side Credentials, it needs an identity, this opti
 The other configuration options SHOULD still be made available, i.e. behind and "Advanced" button, but SHOULD indicate the derived value based on the input in `C_FIDO_RPID`, to help the user understand what this value usually looks like and whether or not it is necessary to change the derived value.
 
 `C_FIDO_RPID`:
-: (Mandatory) The FIDO Relying Party ID to use. This is the basis for all derived configuration items.  
+: (Mandatory) The FIDO Relying Party ID to use. This is the basis for all derived configuration items.
+
 : The value must be a valid domain string as specified in {{WebAuthn}}.
 : Implementations MAY offer the user a set of known RPIDs, if Discoverable Credentials are used and there are already Credentials registered.
 
 `C_IDENTITY`:
-: (Optional) The identity (username) of the user.  
+: (Optional) The identity (username) of the user.
+
 : This configuration item is only needed if Server-Side Credentials are used. It is RECOMMENDED that the identity is just the username and does not contain a realm.
 
 `C_NAI`:
-: (Optional, Derived) The NAI to use in the EAP layer.  
+: (Optional, Derived) The NAI to use in the EAP layer.
+
 : This option MUST be set to `anonymous@<C_FIDO_RPID>`, unless explicitly configured differently.
 
 `C_EXPECTED_SERVERNAME`:
-: (Optional, Derived) The expected server name to use to verify the server's identity.  
+: (Optional, Derived) The expected server name to use to verify the server's identity.
+
 : This option MUST be set to `eap-fido-authentication.<C_FIDO_RPID>` unless explicitly configured differently.[^refrfc9525]{:jf}
 
 `C_TLS_TRUST_ANCHORS`:
-: (Optional, with default) A set of trust anchors to use for checking the server certificate.  
+: (Optional, with default) A set of trust anchors to use for checking the server certificate.
+
 : This option MUST default to the set of trust anchors already present in the operating system, i.e. the set of trust anchors used to verify server certificates for HTTPS, unless the operating system has no such list.
   In this case, the implementation MUST enforce that this option is set.
   Implementations MUST NOT allow this option to be set to trust any certificate.
@@ -303,7 +312,11 @@ The client and server perform a TLS handshake following the specification in {{R
 {: #tls_server_cert_verify}
 
 Clients MUST validate the certificate sent by the server.
-For this the client must check that the server certificate is valid for the domain saved in the configuration item `C_EXPECTED_SERVERNAME` and the certificate chain leads back to a trust anchor listed in `C_TLS_TRUST_ANCHORS`.
+For this the client must first check that `C_EXPECTED_SERVERNAME` is set to the exact domain or a subdomain of `C_FIDO_RPID`.
+This ensures that a misconfiguration cannot be used for cross-domain attacks.
+The client then MUST validate that the server certificate is valid for the domain saved in the configuration item `C_EXPECTED_SERVERNAME` and the certificate chain leads back to a trust anchor listed in `C_TLS_TRUST_ANCHORS`.[^rfc9525again]{:jf}
+
+[^rfc9525again]: Again, here we could look if we can reference RFC9525?
 
 * TODO: OCSP Stapling? Mandatory or not?
 
@@ -590,6 +603,10 @@ EAP-FIDO requires the registered scope to be:
 - identical to the realm in the outer ID
 - within the same second-level domain as the EAP-TLS server certificate will be
 - within the same second-level domain as the FIDO rpId
+
+[^adjust_this_to_DNSID]{:jf}
+
+[^adjust_this_to_DNSID]: TODO: This needs to be updated to match the specification of the fixed-prefix certificate name
 
 ## EAP-Method with EAP-TLS vs standalone EAP method to be used in tunnels
 
