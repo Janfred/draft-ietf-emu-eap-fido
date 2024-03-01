@@ -89,23 +89,24 @@ Two common EAP methods are EAP-PEAP and EAP-TTLS {{?RFC5281}}, that both use EAP
 This inner authentication is most commonly password-based, meaning that an attacker that manages to compromise the TLS connection can eavesdrop on the authentication and observe the password.
 The authentication of the server to the client within the TLS handshake thus is a vital security function of these EAP methods.
 
-The operational praxis has shown that this is a common problem and possible flaw.
+Operational practice has shown that this is a common problem and possible flaw.
 The specification for EAP-TLS {{RFC5216}} does not include guidance on how to decide if a certificate is valid for this specific authentication.
 Instead it assumes the client has knowledge of the expected server name.
 This assumption is reasonable, if all devices are managed centrally and the administrators can easily know and configure all security-relevant parameters in advance.
 Devices in BYOD-environments like eduroam are not managed, so administrators cannot push the desired configuration on the devices, but instead have to rely on the users to configure their devices accordingly.
 This implies that the administrators are aware of all needed configuration items, provide the users with all this information, and the users must follow these guides.
 Failure to configure the parameters correctly will result in connection failure, and frustration, first on the user's end, then on the side of the help desk, that has to deal with the users' problems.
-If the user tries to omit these parameters and the implementation allows a fallback to just omitting the validation, the device will simply work, but now be dangerously susceptible to attacks, e.g. by rouge access points with the same SSID, to which the client will send their password to, regardless of the presented server certificate.
+If the user tries to omit these parameters and the implementation allows a fallback to just omitting the validation, the device will simply work, but now be dangerously susceptible to attacks, e.g. by rogue access points with the same SSID, to which the client will send their password to, regardless of the presented server certificate.
 The second outcome is especially dangerous, because the operator cannot easily check whether the device correctly performed the certificate check, and since the connection just works, the user will not suspect that their local configuration is faulty.
 
 There are two major issues here, that this specification wants to address.
 Firstly, the use of passwords as authentication method implies that the password needs to be sent to the server.
 If an attacker observes this exchange, they can impersonate the user at any time.
 Therefore, this specification uses FIDO authentication, which is based on asymmetric cryptography.
-With this method, even if an attacker is able to compromise the TLS connection, they cannot impersonate the user based on the observed data.
+With this method, even if an attacker is able to compromise the TLS connection, the attacker cannot impersonate the user based on the observed data.
+Since the private key is never revealed, phishing attacks are impossible too.
 
-The second major issue is the missing implicit derivation regarding certificate validation.
+The second major issue is the missing implicit derivation of the expected server name that is used to validate the server's certificate.
 With EAP-FIDO, the supplicants now have a clear specification on how to decide whether or not a server certificate is considered valid for the current authentication flow.
 This is achieved by using the trust anchors available on most devices and a method to determine the valid server name based on implicit information of the authentication configuration.
 
@@ -115,17 +116,24 @@ This is achieved by using the trust anchors available on most devices and a meth
 {::boilerplate bcp14-tagged}
 
 This document uses terminology from EAP, as well as terminology from CTAP and WebAuthn.
+The FIDO specific terminology is defined in {{FIDO-Glossary}}.
 There is some terminology that is ambiguous in the different contexts, to disambiguate it, the following terminology will be used in this document.
 These terms will always be capitalized as shown here.
 
 FIDO Authenticator:
 : Authenticator as specified by {{WebAuthn}}, Section 4: a cryptographic entity, existing in hardware or software, that can register and later assert possession of the registered key credential.
 
+: This is not the same as the EAP authenticator, which is the entity that initiates the EAP conversation, i.e. the Access Point in the case of Enterprise-WiFi.
+
 Discoverable Credential:
 : a public key credential source that is discoverable and usable in authentication ceremonies where the Relying Party does not provide any Credential IDs. See {{WebAuthn}}, Section 4
 
 Server-Side Credential:
-: a public key credential source that is only usable in an authentication ceremony where the Relying Party supplies its Credential ID. This means that the Relying Party must manage the credential's storage and discovery, as well as be able to first identify the user in order to discover the Credential IDs to supply tho the EAP Supplicant.
+: a public key credential source that is only usable in an authentication ceremony where the Relying Party supplies the Credential ID. This means that the Relying Party must manage the credential's storage and discovery, as well as be able to first identify the user in order to discover the Credential IDs to supply this to the EAP Supplicant.
+
+[^todo_terminology]{:jf}
+
+[^todo_terminology]: We need a good term to define a "single authentication", meaning the single process of asking the FIDO Authenticator to sign the client data, with the option of previous discovery, in contrast to the overall authentication process. A complete EAP-FIDO flow may consist of multiple of these "single authentications", and we should have a clear terminology to say "this is just the single instance" and "this is the overall authentication"
 
 # Overview over the EAP-FIDO protocol
 
@@ -162,14 +170,14 @@ If the FIDO Authenticator supports Discoverable Credentials and EAP-FIDO is conf
 If the client is not configured to use Discoverable Credentials, the client first needs to send its username to the server.
 The server will answer with a list of FIDO Credential IDs and the client will attempt to use one of these keys to authenticate.
 
-Depending on the details of the first FIDO authentication flow, the server MAY trigger a second authentication, to enforce token-specific policies.
+Depending on the details of the first single FIDO authentication, the server MAY trigger a second authentication, to enforce token-specific policies.
 
 ## Client and server configuration and preconditions
 
 As the EAP-FIDO protocol aims to provide a means of authentication that is easy to setup and maintain for both users and server operators, there are only few configuration items required.
 However, if several setups require a different setup than the one that is outlined as the default here, additional configuration parameters can be set to modify the default behavior.
 
-To better distinguish the server and client configuration items all server configuration options are prefixed with `S_`, all client options with `C_`.
+To better distinguish the server and client configuration items throughout this document, all server configuration options are prefixed with `S_`, all client options with `C_`.
 
 ### Server configuration items and preconditions
 
@@ -201,13 +209,13 @@ Depending on the use case, the database may have additional fields that save the
 
 Remarks:
 
-1: The username may not be needed in cases where an identification of the individual user is not neccessary and Discoverable Credentials are used.
+1: The username may not be needed in cases where an identification of the individual user is not necessary and Discoverable Credentials are used.
 Server-Side Credentials need a hint to the user, since the server must send a list of possible PKIDs to the client.
 For Discoverable Credentials, this is not needed.
-If a server administrator does not care about the identity of the user or has other means to identify a user based on the used PKID, i.e. because the mapping is stored in a seperate database, the EAP-FIDO server does not need access to this information.
+If a server operator does not care about the identity of the user or has other means to identify a user based on the used PKID, i.e. because the mapping is stored in a separate database, the EAP-FIDO server does not need access to this information.
 
 2: If present, the signCount field SHOULD be writable to the EAP-FIDO server. The signCount functionality is intended to have a means for the server to detect when a credential was cloned and two instances are used in parallel.
-The value is strictly monotonically increasing for each FIDO Authenticator, so if at some point a signCount is transmitted that is smaller than or equal to the saved signCount, a second FIDO Authenticor is potentially using the same credential.
+The value is strictly monotonically increasing for each FIDO Authenticator, so if at some point a signCount is transmitted that is smaller than or equal to the saved signCount, a second FIDO Authenticator is potentially using the same credential.
 How servers deal with such case is outside of the scope of this specification.
 
 ### Client configuration items and preconditions
@@ -218,11 +226,11 @@ Details on this rationale can be found in {{registration-out-of-scope}}.
 
 [^future]{:jf}
 
-[^future]: A future version of this draft may include some means for the server to signal a URL where to register the FIDO key. The flow could be the following: The user enters their realm, the server recognises that there is no FIDO credential available, send a URL where the user can register their credential, the UI shows this URL, the user can click their, log in with their credentials (i.e. via SSO), register the FIDO token and then it just works. \o/ Of course we need to make sure that noone can hijack that process, so the EAP-TLS handshake must be performed, so the client knows it talks with the correct server.
+[^future]: A future version of this draft may include some means for the server to signal a URL where to register the FIDO key. The flow could be the following: The user enters their realm, the server recognizes that there is no FIDO credential available, send a URL where the user can register their credential, the UI shows this URL, the user can click their, log in with their credentials (i.e. via SSO), register the FIDO token and then it just works. \o/ Of course we need to make sure that no one can hijack that process, so the EAP-TLS handshake must be performed, so the client knows it talks with the correct server.
 
 The client has several configuration options. However, there is only one mandatory configuration option and user interfaces SHOULD present this option prominently.
 If the server relies on Server-Side Credentials, it needs an identity, this option SHOULD be presented in the initial configuration interface as well, marked as optional.
-The other configuration options SHOULD still be made available, i.e. behind and "Advanced" button, but SHOULD indicate the derived value based on the input in `C_FIDO_RPID`, to help the user understand what this value usually looks like and whether or not it is necessary to change the derived value.
+The other configuration options SHOULD still be made available, i.e. behind an "Advanced" button, but SHOULD indicate the derived value based on the input in `C_FIDO_RPID`, to help the user understand what this value usually looks like and whether or not it is necessary to change the derived value.
 
 `C_FIDO_RPID`:
 : (Mandatory) The FIDO Relying Party ID to use. This is the basis for all derived configuration items.
@@ -244,6 +252,7 @@ The other configuration options SHOULD still be made available, i.e. behind and 
 : (Optional, Derived) The expected server name to use to verify the server's identity.
 
 : This option MUST be set to `eap-fido-authentication.<C_FIDO_RPID>` unless explicitly configured differently.[^refrfc9525]{:jf}
+  If manually configured, implementations MUST check that `C_EXPECTED_SERVERNAME` is either equal to or a subdomain (in any depth) of `C_FIDO_RPID` and MUST reject configurations that do not match this condition.
 
 `C_TLS_TRUST_ANCHORS`:
 : (Optional, with default) A set of trust anchors to use for checking the server certificate.
@@ -266,7 +275,7 @@ The protocol starts with the TLS handshake phase, and, after the TLS tunnel is e
 
 The packet format for EAP-FIDO messages follows the format specified in {{RFC5216, Section 3}} with the following modifications:
 
-* The Type field is set to `<insert EAP code here, Proof of Concept uses the method type 255 "Experimental">` [awaiting IANA early allocation] (EAP-FIDO)
+* The Type field is set to `<insert EAP code here, Proof of Concept uses the method type 255 "Experimental", once we have a stable message format we'll ask for IANA early allocation>` (EAP-FIDO)
 * Within the Flags field, the Version bits are set to the major version of EAP-FIDO. For this specification, the major version is 0. Future EAP-FIDO versions MAY increase the version number.
 
 
@@ -276,9 +285,7 @@ The packet format for EAP-FIDO messages follows the format specified in {{RFC521
 In the first packet from the server to the client, the S-bit of the Flags MUST be set, indicating the start of the EAP-FIDO protocol.
 It MUST NOT be set in any subsequent packet.
 
-[^RPID_Option1]{:jf}
-
-[^RPID_Option1]: Depending on the decision on the way the RPID is determined, some additional spec may be added here, see {{openquestions_rpid}}.
+Future versions of EAP-FIDO MAY send additional data outside the TLS tunnel with the first EAP message, supplicants SHOULD ignore any additional data sent with this packet.
 
 ### Version negotiation
 
@@ -401,7 +408,7 @@ Authentication Requirements:
 Additional Client Data:
 : (Optional) Additional data to be signed by the FIDO Authenticator.
 
-If no attributes are transmitted, the attributes field MUST be set to an empty map, instead of ommitting it completely.
+If no attributes are transmitted, the attributes field MUST be set to an empty map, instead of omitting it completely.
 
 Since this packet signals the start of a new authentication, the client MUST initialize a new authentication and MUST NOT reuse information from any previous authentication attempt, even if the previous authentication exchange was not completed.
 It MAY cache some data to perform sanity checks, i.e. to protect itself against misbehaving servers that try to re-initialize an authentication with the same parameters multiple times.
@@ -533,7 +540,7 @@ In this table are some error conditions, the list is not yet complete and not or
 | Error code | non-recoverable | human-readable Label | Description |
 |---|---|---|---|
 | ? | no | No username configured | The client configuration had no username configured and no Discoverable Credential was available. |
-| ? | yes | Unexpected Message | The client or server received an unexpected message. Either one of the peers is misbehaving or they use incompatible versions. Either way, a successfull authentication is not possible under these circumstances. |
+| ? | yes | Unexpected Message | The client or server received an unexpected message. Either one of the peers is misbehaving or they use incompatible versions. Either way, a successful authentication is not possible under these circumstances. |
 | ? | no | Insufficient Information | The client did not have sufficient information to perform a FIDO authentication. |
 
 # Implementation Guidelines
@@ -589,7 +596,7 @@ An authentication transaction can not request a higher level than was set at reg
 
 EAP-FIDO supports all three transaction modes, and the server can signal its required minimum assertion level for each individual authentication transaction.
 
-## FIDO2 key scopes
+## FIDO2 key scopes and certificate name considerations
 
 The scope of a FIDO2 key as set during the registration transaction determines the contexts in which it can be used.
 In EAP-FIDO, the following three notions interplay:
@@ -598,15 +605,16 @@ In EAP-FIDO, the following three notions interplay:
 - the servername as presented during the EAP-TLS exchange by the EAP-FIDO server
 - the relyingPartyIdentifier (rpId) that is used during the FIDO CTAP client authentication phase
 
-EAP-FIDO requires the registered scope to be:
+Since FIDO keys may be used in other contexts, such as [WebAuthn], we have to ensure that the security parameters of EAP-FIDO and other FIDO-based protocols align.
 
-- identical to the realm in the outer ID
-- within the same second-level domain as the EAP-TLS server certificate will be
-- within the same second-level domain as the FIDO rpId
+The most important restriction regards the relation between domain name and Relying Party ID.
+This relation ensures that a FIDO credential is linked to a specific scope and cannot be used outside of that scope.
+Thus, in EAP-FIDO we must a equivalent dependency, that prevents the usage of a FIDO credential outside its intended scope, which could serve as basis for a cross-protocol attack.
 
-[^adjust_this_to_DNSID]{:jf}
+Therefore, we require that the configuration item `C_EXPECTED_SERVERNAME`, which is used to verify the server certificate within the EAP-TLS handshake, is the same as or a subdomain of `C_FIDO_RPID`.
+This ensures that only an entity with a valid certificate within the scope the FIDO credential is registered to can also use the FIDO credential for EAP-FIDO.
 
-[^adjust_this_to_DNSID]: TODO: This needs to be updated to match the specification of the fixed-prefix certificate name
+This check MUST be done within the supplicant, and the server has to trust the supplicant's implementation to actually check this.
 
 ## EAP-Method with EAP-TLS vs standalone EAP method to be used in tunnels
 
@@ -635,6 +643,8 @@ The source code can be found under [https://git.rieckers.it/rieckers/hostap/-/tr
 # Security Considerations
 
 TODO Security
+
+The security properties of FIDO are described in {{FIDO-SecRef}}
 
 # Deployment Considerations
 
@@ -736,7 +746,7 @@ The server stores the timestamp of the successful user verification in its datab
 
 As with the previous example, in this case the FIDO token again have a token-specific timeout to allow silent authentication for a period of time after a successful user verification.
 Unlike in the previous example, this time there is a grace period that still allows a silent authentication for a while after the timer expired.
-The intention is to not kick out the user in the moment the timer expires, i.e. a user is currently not in the vicinity of the device at that time, but one would not want to kick out the user if it needs to reconnect due to poor wifi performance.
+The intention is to not kick out the user in the moment the timer expires, i.e. a user is currently not in the vicinity of the device at that time, but one would not want to kick out the user if it needs to reconnect due to poor WiFi performance.
 Instead, the user may choose a convenient time to verify their identity/presence within this grace period.
 
 The protocol flow is the same as the previous example, but this time the second Authentication Request from the server cannot be answered from the client, since the user is not performing the user verification.
@@ -839,7 +849,7 @@ Input on the need and specific way to achieve this is welcome.
 The current specification allows the server to send additional data for the FIDO client-data-hash, but if the server omits that, the client-data-hash is only comprised of the exported key material from TLS.
 Now the interesting question is: Is this a problem?
 Could a malicious server, that came in possession of a certificate that the client trusts, perform multiple authentication runs and observe the client's behavior and analyze the different signatures?
-Basically, this could be a chosen-plaintext attack,
+Basically, this could be a chosen-plaintext attack, where the attacker could control at least some portions of the plaintext.
 One way around this would be to include a nonce in the TLS-Exporter for the FIDO challenge, so the client selects this nonce and sends it to the server, this way the server can not predict the plaintext used for signing.
 The possibility of a double-signature with the same data is prevented by the counter increasing with every signature, but maybe some authenticators do not implement this counter.
 The research whether or not this is a problem is still TODO, if FIDO experts have an opinion about this, please contact the authors.
