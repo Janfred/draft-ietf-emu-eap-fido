@@ -257,13 +257,13 @@ The other configuration options SHOULD still be made available, i.e. behind an "
 `C_TLS_TRUST_ANCHORS`:
 : (Optional, with default) A set of trust anchors to use for checking the server certificate.
 
-: This option MUST default to the set of trust anchors already present in the operating system, i.e. the set of trust anchors used to verify server certificates for HTTPS, unless the operating system has no such list.
+: This option MUST default to the set of trust anchors already present on the device, i.e. the set of trust anchors used to verify server certificates for HTTPS, unless the device has no such set available.
   In this case, the implementation MUST enforce that this option is set.
-  Implementations MUST NOT allow this option to be set to trust any certificate.
+  Implementations MUST NOT allow this option to be set to trust certificates from unknown trust anchors.
   Implementations SHOULD allow to select multiple trust anchors.
 
 
-[^refrfc9525]: Maybe we could reference RFC9525 here, especially Section 6.3 on how to match the DNS Domain Name Portion against a certificate. In this case, the `C_EXPECTED_SERVERNAME` would be a `DNS-ID` according to RFC9525 terminology.
+[^refrfc9525]: The prefix value is not final yet. Might still change, depending on the result of the name discussion. Maybe we could also reference RFC9525 here, especially Section 6.3 on how to match the DNS Domain Name Portion against a certificate. In this case, the `C_EXPECTED_SERVERNAME` would be a `DNS-ID` according to RFC9525 terminology.
 
 # EAP-FIDO protocol flow and message format
 
@@ -283,9 +283,10 @@ The packet format for EAP-FIDO messages follows the format specified in {{RFC521
 ### EAP-FIDO Start packet
 
 In the first packet from the server to the client, the S-bit of the Flags MUST be set, indicating the start of the EAP-FIDO protocol.
-It MUST NOT be set in any subsequent packet.
+The S-bit MUST NOT be set in any subsequent packet.
+This packet contains only the EAP header (Code, Identifier, Length, Type) and the EAP-TLS flags.
 
-Future versions of EAP-FIDO MAY send additional data outside the TLS tunnel with the first EAP message, supplicants SHOULD ignore any additional data sent with this packet.
+Future versions of EAP-FIDO may send additional data outside the TLS tunnel with the first EAP message, supplicants SHOULD ignore any additional data sent with this packet.
 
 ### Version negotiation
 
@@ -313,14 +314,14 @@ The client and server perform a TLS handshake following the specification in {{R
 
 * TLS version 1.3 or higher MUST be negotiated.
 * Mutual authentication is not required. Implementations MUST support EAP-FIDO without TLS client authentication, but MAY allow it, i.e. if EAP-FIDO is used as a 2-Factor authentication method where TLS client certificates are the first factor and the FIDO authentication is the second.
-* The certificate of the server MUST be validated. The different options for validation are listed in {{tls_server_cert_verify}}.
+* The certificate of the server MUST be validated according to the verification steps described in the next section.
 
 ### TLS Server Certificate Verification
 {: #tls_server_cert_verify}
 
 Clients MUST validate the certificate sent by the server.
 For this the client must first check that `C_EXPECTED_SERVERNAME` is set to the exact domain or a subdomain of `C_FIDO_RPID`.
-This ensures that a misconfiguration cannot be used for cross-domain attacks.
+This ensures that a misconfiguration cannot be used for cross-domain or even cross-protocol attacks.
 The client then MUST validate that the server certificate is valid for the domain saved in the configuration item `C_EXPECTED_SERVERNAME` and the certificate chain leads back to a trust anchor listed in `C_TLS_TRUST_ANCHORS`.[^rfc9525again]{:jf}
 
 [^rfc9525again]: Again, here we could look if we can reference RFC9525?
@@ -336,13 +337,14 @@ This section describes the message format and the protocol flow.
 
 ### Message format
 
-All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with two elements:
+All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with one or two elements:
 
 type:
 : integer to indicate the message type. {{msgtypes}} contains a list of the different message types.
 
 attributes:
 : a CBOR encoded map with attributes. A list of the different attributes, their assigned mapkey and the type are listed in {{mapkeys}}.
+  This element is omitted in the Success indicator message.
 
 | Type | Description | Sent by |
 |------|-------------|-----------|
@@ -364,7 +366,7 @@ attributes:
 | 4 | Byte String | FIDO Signature | |
 | 5 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, i.e. if user presence or user verification is required |
 | 6 | Byte String | PKID | Needed to identify the credential |
-| 7 | Integer | Error Code | A code describing the error , see {{error_conditions}} for a list of error codes |
+| 7 | Integer | Error Code | A code describing the error, see {{error_conditions}} for a list of error codes |
 | 8 | UTF-8 String | Error Description | An optional human-readable error description |
 {: #mapkeys title="Mapkeys for the attributes"}
 
@@ -517,10 +519,14 @@ The second item is the optional additional client data sent by the server.
 Both items are concatenated and hashed using SHA-256.
 The result is the clientDataHash for the FIDO authentication.
 
+TODO: format of Authentication Requirements and how to send them using CTAP
+
+Completely TODO: Server side. How to validate. If up/uv was provided, even if not required, the server should update the "last up/uv seen" field for example.
+
 ## Error conditions
 {: #error_conditions }
 
-TODO
+TODO, only a stub, not yet finished.
 
 Errors can be non-recoverable, or recoverable.
 If an error is non-recoverable, then it MUST only appear in a Failure Indication message.
@@ -876,6 +882,7 @@ draft-janfred-eap-fido-02:
 > * Add `eap-fido-authentication.<RPID>` as default server identity.
 > * Refine wording around server name verification
 > * Adjust message formats and attribute mapkeys to not transmit the RPID any more.
+> * Add first few paragraphs on error handling
 
 ## Missing Specs
 
