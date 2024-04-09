@@ -1,0 +1,493 @@
+{
+  "magic": "E!vIA5L86J2I",
+  "timestamp": "2024-04-09T00:58:32.543225+00:00",
+  "repo": "Janfred/draft-janfred-eap-fido",
+  "labels": [
+    {
+      "name": "bug",
+      "description": "Something isn't working",
+      "color": "d73a4a"
+    },
+    {
+      "name": "documentation",
+      "description": "Improvements or additions to documentation",
+      "color": "0075ca"
+    },
+    {
+      "name": "duplicate",
+      "description": "This issue or pull request already exists",
+      "color": "cfd3d7"
+    },
+    {
+      "name": "enhancement",
+      "description": "New feature or request",
+      "color": "a2eeef"
+    },
+    {
+      "name": "good first issue",
+      "description": "Good for newcomers",
+      "color": "7057ff"
+    },
+    {
+      "name": "help wanted",
+      "description": "Extra attention is needed",
+      "color": "008672"
+    },
+    {
+      "name": "invalid",
+      "description": "This doesn't seem right",
+      "color": "e4e669"
+    },
+    {
+      "name": "question",
+      "description": "Further information is requested",
+      "color": "d876e3"
+    },
+    {
+      "name": "wontfix",
+      "description": "This will not be worked on",
+      "color": "ffffff"
+    }
+  ],
+  "issues": [
+    {
+      "number": 3,
+      "id": "I_kwDOJtVZac55kFgx",
+      "title": "Add security consideration / deployment consideration about transferable Keys if no user verification is used",
+      "url": "https://github.com/Janfred/draft-janfred-eap-fido/issues/3",
+      "state": "CLOSED",
+      "author": "Janfred",
+      "authorAssociation": "OWNER",
+      "assignees": [],
+      "labels": [],
+      "body": "If only up is used and not uv, then a token may get transferred to a new person without knowledge of the RADIUS operator. This may not be desired, because even if a up is requested every 200 authentication, it does not ensure that it is still in the possession of the right user.",
+      "createdAt": "2023-12-13T11:22:01Z",
+      "updatedAt": "2024-02-08T13:29:03Z",
+      "closedAt": "2024-02-08T13:29:03Z",
+      "comments": []
+    }
+  ],
+  "pulls": [
+    {
+      "number": 1,
+      "id": "PR_kwDOJtVZac5dImGC",
+      "title": "be more explicit about the relationship between RADIUS ID, server nam\u2026",
+      "url": "https://github.com/Janfred/draft-janfred-eap-fido/pull/1",
+      "state": "OPEN",
+      "author": "restena-sw",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "\u2026e, FIDO2 scope\r\n\r\nparticularly the validations done when either implicitly deriving from realm vs. actual config",
+      "createdAt": "2023-10-18T12:19:44Z",
+      "updatedAt": "2023-11-10T10:07:59Z",
+      "baseRepository": "Janfred/draft-janfred-eap-fido",
+      "baseRefName": "main",
+      "baseRefOid": "b676212e1b7ece723f932551f48b3f8afbb2056e",
+      "headRepository": "Janfred/draft-janfred-eap-fido",
+      "headRefName": "restena-sw-patch-1",
+      "headRefOid": "73eb3ebbc05b6a28f75cf8b6f2158e6a420f4e44",
+      "closedAt": null,
+      "mergedAt": null,
+      "mergedBy": null,
+      "mergeCommit": null,
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJtVZac5kcAhp",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "CHANGES_REQUESTED",
+          "body": "See comments inline.",
+          "createdAt": "2023-10-18T13:20:10Z",
+          "updatedAt": "2023-10-18T13:29:37Z",
+          "comments": [
+            {
+              "originalPosition": 51,
+              "body": "The protocol itself is called \"CTAP\", not \"CTAP2\". Maybe explicitly reference \"CTAP v2\"?",
+              "createdAt": "2023-10-18T13:20:11Z",
+              "updatedAt": "2023-10-18T13:29:37Z"
+            },
+            {
+              "originalPosition": 25,
+              "body": "I think this is not exactly what I meant with the original line.\r\n\r\nRPID (FIDO) != Realm (RADIUS) != SAN (Certificate)\r\n\r\nThe interesting question is now how these three are put together and what exactly their relation is.\r\n\r\nThe WebAuthn spec requires RPID to be a suffix of SAN (with the limitation that the RPID needs to be at least a registerable domain).\r\nIt would (from my current point of view) open up a whole new barrel of security considerations, if we move from this behavior and concentrate on the Realm as center, but allow RPID and SAN to diverge.",
+              "createdAt": "2023-10-18T13:26:02Z",
+              "updatedAt": "2023-10-18T13:29:37Z"
+            },
+            {
+              "originalPosition": 9,
+              "body": "I wouldn't make this a mandatory configuration requirement.\r\nIt can certainly be an optional one, but if it is not configured, the client MUST fall back to its built-in set of trust anchors.",
+              "createdAt": "2023-10-18T13:26:45Z",
+              "updatedAt": "2023-10-18T13:29:38Z"
+            },
+            {
+              "originalPosition": 54,
+              "body": "I think the last sentence is not necessary, I wouldn't allow both (configuration and sent by server).\r\nI don't know if we gain anything if the server re-sends the RPID if it is configured on the client, and if it isn't then we can have the `CONCAT('.', REALM)` text",
+              "createdAt": "2023-10-18T13:28:56Z",
+              "updatedAt": "2023-10-18T13:29:38Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcVE_",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:49:47Z",
+          "updatedAt": "2023-10-18T13:49:47Z",
+          "comments": [
+            {
+              "originalPosition": 51,
+              "body": "I stand corrected :-) My point is mainly that we do want v2 or higher; CTAP v1 is going back in time, no need for that in a new spec.",
+              "createdAt": "2023-10-18T13:49:47Z",
+              "updatedAt": "2023-10-18T13:49:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcWZM",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:51:57Z",
+          "updatedAt": "2023-10-18T13:51:57Z",
+          "comments": [
+            {
+              "originalPosition": 51,
+              "body": "I think the FIDO-specific text in the draft will come in the next months, after I had enough time to completely understand it. The whole section is more or less a \"Here is a text that isn't lorem ipsum\"",
+              "createdAt": "2023-10-18T13:51:57Z",
+              "updatedAt": "2023-10-18T13:51:57Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcWu_",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:52:30Z",
+          "updatedAt": "2023-10-18T13:52:30Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "Very good point. So we better follow WebAuthn: once you have a TLS server certificate, the RPID follows from the name in the cert.\r\n\r\nWhich means we don't need to configure it at all.\r\n\r\nAnd that three-way relationsship becomes two-way: a string for the username, and the subsequent TLS server name.\r\n\r\nTBD: what if the server cert contains multiple sAN:DNS for different domains. Do we require consistency \u00e0 la \"only those sANs that have a relation with the routing ID\" or \"any of them are fine\"?",
+              "createdAt": "2023-10-18T13:52:30Z",
+              "updatedAt": "2023-10-18T13:52:30Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcXJw",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:53:12Z",
+          "updatedAt": "2023-10-18T13:53:12Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "The built-in set is also a store :-)\r\n\r\nI've updated the PR to make clear that this store we are talking about *can* be the WebPKI one.",
+              "createdAt": "2023-10-18T13:53:12Z",
+              "updatedAt": "2023-10-18T13:53:12Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcYC8",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:54:41Z",
+          "updatedAt": "2023-10-18T13:54:41Z",
+          "comments": [
+            {
+              "originalPosition": 54,
+              "body": "But here it's a catch22: the very first message is sent from the server to the client, and that message includes an RPID.\r\n\r\nOf course, if a client has a configured one, it doesn't need the information that comes from the server.\r\n\r\nBut are we really fine with saying: we ignore the server-side message - no sanity checking?",
+              "createdAt": "2023-10-18T13:54:41Z",
+              "updatedAt": "2023-10-18T13:54:41Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcYP2",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:54:58Z",
+          "updatedAt": "2023-10-18T13:54:59Z",
+          "comments": [
+            {
+              "originalPosition": 51,
+              "body": "changed to speak of version 2 +.",
+              "createdAt": "2023-10-18T13:54:58Z",
+              "updatedAt": "2023-10-18T13:54:59Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcbF2",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T13:59:32Z",
+          "updatedAt": "2023-10-18T13:59:32Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "Then again the problem arises: We establish the TLS connection and have to check the certificate afterwards. That's the point where I'm still torn whether this is a good idea, because I fear that implementers will get it wrong (esp. because in some EAP stacks, the TLS layer may be more or less completely separated from the phase 2, so caching the certificate may require some structural changes, but again, maybe I'm chasing ghosts here)\r\n\r\nFor web this is easy, since FQDN == SAN, so WebAuthn can check the RPID against FQDN.\r\n\r\nMy ideal situation would be if we can somehow check both realm and RPID against the Certificate with a well-defined suffix match, but I think this is the point where we need more time to go over our options, have security considerations in each direction and get community feedback.",
+              "createdAt": "2023-10-18T13:59:32Z",
+              "updatedAt": "2023-10-18T13:59:32Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kccAT",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:01:02Z",
+          "updatedAt": "2023-10-18T14:01:02Z",
+          "comments": [
+            {
+              "originalPosition": 54,
+              "body": "If we have the RPID configured, then the server would not send it.\r\n\r\nIt's currently in the spec, because I don't know what option we choose, but if we have it configured, then the server would just omit it and be configured for a specific RPID (or the client would signal the RPID via SNI)",
+              "createdAt": "2023-10-18T14:01:02Z",
+              "updatedAt": "2023-10-18T14:01:03Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcdYh",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:03:19Z",
+          "updatedAt": "2023-10-18T14:03:19Z",
+          "comments": [
+            {
+              "originalPosition": 25,
+              "body": "If we stick with the paradigm that EAP-FIDO shouild be as easy as possible to configure, then we'll have to live with having an operation mode that sources from exactly one string (\"username\") to base all the checks on.\r\n\r\nBut yes, if there is a desire to be able to check the RPID against something else, then an (optional) explicit configuration item for the RPID needs to be there.",
+              "createdAt": "2023-10-18T14:03:19Z",
+              "updatedAt": "2023-10-18T14:03:19Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcgJI",
+          "commit": {
+            "abbreviatedOid": "5faf6a8"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:07:55Z",
+          "updatedAt": "2023-10-18T14:08:44Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "```suggestion\r\n* a CA Certificate trust store which contains at least the root CA that issued the server certificate on the EAP-FIDO server. This can be the system-wide WebPKI store, or a dedicated store for the specific purpose of EAP-FIDO server validation. Implementations MUST NOT allow to disable certificate checks.\r\n```",
+              "createdAt": "2023-10-18T14:07:55Z",
+              "updatedAt": "2023-10-18T14:08:44Z"
+            },
+            {
+              "originalPosition": 9,
+              "body": "I think this is useful to include.\r\nMaybe a bit too strong, but that should be open for discussion, for the -00 draft hopefully ok",
+              "createdAt": "2023-10-18T14:08:40Z",
+              "updatedAt": "2023-10-18T14:08:44Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kciFe",
+          "commit": {
+            "abbreviatedOid": "5faf6a8"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:10:33Z",
+          "updatedAt": "2023-10-18T14:10:33Z",
+          "comments": [
+            {
+              "originalPosition": 9,
+              "body": "Sure, looks good.",
+              "createdAt": "2023-10-18T14:10:33Z",
+              "updatedAt": "2023-10-18T14:10:34Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kcjLn",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "restena-sw",
+          "authorAssociation": "COLLABORATOR",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:12:20Z",
+          "updatedAt": "2023-10-18T14:12:20Z",
+          "comments": [
+            {
+              "originalPosition": 54,
+              "body": "I see; then in the minimalistic scenario, the one thing to configure is the RPID; but then the routing ID gets derived from that. I guess then there's not much chance for flexibility: routing ID is then equal to RPID.",
+              "createdAt": "2023-10-18T14:12:20Z",
+              "updatedAt": "2023-10-18T14:12:20Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5kc0Lw",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-18T14:37:47Z",
+          "updatedAt": "2023-10-18T14:37:47Z",
+          "comments": [
+            {
+              "originalPosition": 54,
+              "body": "Either RPID=Realm or we configure both (or at least offer the option to configure both, but if RPID is left unconfigured it will default to the Realm)",
+              "createdAt": "2023-10-18T14:37:47Z",
+              "updatedAt": "2023-10-18T14:37:47Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOJtVZac5k3Sf2",
+          "commit": {
+            "abbreviatedOid": "de41a9b"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2023-10-23T10:32:03Z",
+          "updatedAt": "2023-10-23T10:32:04Z",
+          "comments": [
+            {
+              "originalPosition": 54,
+              "body": "I've changed the wording a bit to present that this is an open discussion item.",
+              "createdAt": "2023-10-23T10:32:04Z",
+              "updatedAt": "2023-10-23T10:32:04Z"
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "number": 2,
+      "id": "PR_kwDOJtVZac5etZ0S",
+      "title": "Update draft-janfred-eap-fido.md",
+      "url": "https://github.com/Janfred/draft-janfred-eap-fido/pull/2",
+      "state": "MERGED",
+      "author": "bepstein",
+      "authorAssociation": "NONE",
+      "assignees": [],
+      "labels": [],
+      "body": "Fix typo \"FIOD\" to \"FIDO\"",
+      "createdAt": "2023-11-06T16:17:51Z",
+      "updatedAt": "2023-11-06T16:38:23Z",
+      "baseRepository": "Janfred/draft-janfred-eap-fido",
+      "baseRefName": "restena-sw-patch-1",
+      "baseRefOid": "305e05f2caa1775e094449a1a23985077532bd7c",
+      "headRepository": "bepstein/draft-janfred-eap-fido",
+      "headRefName": "patch-1",
+      "headRefOid": "aba4f8ac6c3e3b79e033cddb6c987311e02b602c",
+      "closedAt": "2023-11-06T16:38:23Z",
+      "mergedAt": "2023-11-06T16:38:23Z",
+      "mergedBy": "Janfred",
+      "mergeCommit": {
+        "oid": "461272d4a395562136527b804b4c34b0c0327c59"
+      },
+      "comments": [],
+      "reviews": [
+        {
+          "id": "PRR_kwDOJtVZac5mQwcS",
+          "commit": {
+            "abbreviatedOid": "aba4f8a"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "APPROVED",
+          "body": "",
+          "createdAt": "2023-11-06T16:38:04Z",
+          "updatedAt": "2023-11-06T16:38:04Z",
+          "comments": []
+        }
+      ]
+    },
+    {
+      "number": 4,
+      "id": "PR_kwDOJtVZac5iCd-8",
+      "title": "deployment consideration",
+      "url": "https://github.com/Janfred/draft-janfred-eap-fido/pull/4",
+      "state": "MERGED",
+      "author": "restena-sw",
+      "authorAssociation": "COLLABORATOR",
+      "assignees": [],
+      "labels": [],
+      "body": "closes #3",
+      "createdAt": "2023-12-14T19:53:33Z",
+      "updatedAt": "2024-02-08T13:29:03Z",
+      "baseRepository": "Janfred/draft-janfred-eap-fido",
+      "baseRefName": "main",
+      "baseRefOid": "2d5820ad76798c4bf5cb09af6ec0785b9145dccb",
+      "headRepository": "Janfred/draft-janfred-eap-fido",
+      "headRefName": "restena-sw-deployment-uv",
+      "headRefOid": "76cb76bc10eea4c0ab4dbd393ed5a00bc1f41660",
+      "closedAt": "2024-02-08T13:29:03Z",
+      "mergedAt": "2024-02-08T13:29:03Z",
+      "mergedBy": "Janfred",
+      "mergeCommit": {
+        "oid": "76cb76bc10eea4c0ab4dbd393ed5a00bc1f41660"
+      },
+      "comments": [],
+      "reviews": []
+    }
+  ]
+}
