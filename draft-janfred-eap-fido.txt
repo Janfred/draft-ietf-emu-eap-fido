@@ -747,10 +747,9 @@ Table of Contents
    authentication, the client can send an information request message to
    the server.
 
-   my java client sent out an empty client certificate.This is the case
-   if Server-Side Credentials are used, since the FIDO Authenticator
-   needs the list of acceptable Credential IDs to access the actual
-   credentials on the FIDO Authenticator.
+   This is the case if Server-Side Credentials are used, since the FIDO
+   Authenticator needs the list of acceptable Credential IDs to access
+   the actual credentials on the FIDO Authenticator.
 
    With the information request the client can transmit additional
    information that help the server to compile this information.
