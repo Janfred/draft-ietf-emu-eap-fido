@@ -517,6 +517,7 @@ The second item is derived from the TLS keying material:
     FIDO_CHALLENGE_TLS = TLS-Exporter("fido challenge", NULL, 32)
 
 The third item is the optional additional client data sent by the server.
+If the server did not send additional client data, this is omitted.
 
 All three items are concatenated and hashed using SHA-256.[^cryptoagility]{:jf}
 The result is the clientDataHash for the FIDO authentication.
@@ -906,7 +907,7 @@ draft-janfred-eap-fido-02:
 draft-ietf-emu-eap-fido-00:
 
 > * First WG draft
-> * Update way FIDO client data is concatenated (include protocol binding at the very beginning)
+> * Update way FIDO client data is constructed (include protocol binding at the very beginning, before exported key material from TLS)
 > * Change auth requirements attribute to array of ints or text string, with text strings used for experimental features
 > * Update IANA section for registry of auth requirement ints
 
