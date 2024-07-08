@@ -2055,7 +2055,8 @@ This message <span class="bcp14">MUST</span> include a PKIDs attribute with only
 FIDO_CHALLENGE_TLS = TLS-Exporter("fido challenge", NULL, 32)
 </pre><a href="#section-4.3-8" class="pilcrow">¶</a>
 </div>
-<p id="section-4.3-9">The third item is the optional additional client data sent by the server.<a href="#section-4.3-9" class="pilcrow">¶</a></p>
+<p id="section-4.3-9">The third item is the optional additional client data sent by the server.
+If the server did not send additional client data, this is omitted.<a href="#section-4.3-9" class="pilcrow">¶</a></p>
 <p id="section-4.3-10">All three items are concatenated and hashed using SHA-256.<span class="cref" id="cryptoagility">This has no crypto agility, as was correctly pointed out. This part comes from the WebAuthn spec, where SHA-256 is fixed. For EAP-FIDO we could opt for crypto agility, since the hashing algorithm is not neccesarily fixed.<span class="crefSource">Janfred</span></span>
 The result is the clientDataHash for the FIDO authentication.<a href="#section-4.3-10" class="pilcrow">¶</a></p>
 <p id="section-4.3-11">TODO: format of Authentication Requirements and how to send them using CTAP<a href="#section-4.3-11" class="pilcrow">¶</a></p>
@@ -2731,7 +2732,7 @@ The research whether or not this is a problem is still TODO, if FIDO experts hav
                 <p id="appendix-C.1-8.1.1.1.1">First WG draft<a href="#appendix-C.1-8.1.1.1.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-C.1-8.1.1.2">
-                <p id="appendix-C.1-8.1.1.2.1">Update way FIDO client data is concatenated (include protocol binding at the very beginning)<a href="#appendix-C.1-8.1.1.2.1" class="pilcrow">¶</a></p>
+                <p id="appendix-C.1-8.1.1.2.1">Update way FIDO client data is constructed (include protocol binding at the very beginning, before exported key material from TLS)<a href="#appendix-C.1-8.1.1.2.1" class="pilcrow">¶</a></p>
 </li>
               <li class="normal" id="appendix-C.1-8.1.1.3">
                 <p id="appendix-C.1-8.1.1.3.1">Change auth requirements attribute to array of ints or text string, with text strings used for experimental features<a href="#appendix-C.1-8.1.1.3.1" class="pilcrow">¶</a></p>
