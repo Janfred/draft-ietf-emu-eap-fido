@@ -17,10 +17,10 @@ BCP 78, 79, the TLP, and the TLP rules regarding code components (e.g. being
 subject to a Simplified BSD License) in Contributions.
 ## Working Group Information
 
-Discussion of this work occurs on the [Extensible Authentication Protocol
-Working Group mailing list](mailto:eap@frascone.com)
-([archive](http://mail.frascone.com/pipermail/eap/),
-[subscribe](eap-request@frascone.com)).
+Discussion of this work occurs on the [EAP Method Update
+Working Group mailing list](mailto:emu@ietf.org)
+([archive](https://mailarchive.ietf.org/arch/browse/emu/),
+[subscribe](emu-request@ietf.org)).
 In addition to contributions in GitHub, you are encouraged to participate in
 discussions there.
 

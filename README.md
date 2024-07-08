@@ -2,16 +2,16 @@
 
 This is the working area for the individual Internet-Draft, "EAP-FIDO".
 
-* [Editor's Copy](https://Janfred.github.io/draft-janfred-eap-fido/#go.draft-janfred-eap-fido.html)
-* [Datatracker Page](https://datatracker.ietf.org/doc/draft-janfred-eap-fido)
-* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-janfred-eap-fido)
-* [Compare Editor's Copy to Individual Draft](https://Janfred.github.io/draft-janfred-eap-fido/#go.draft-janfred-eap-fido.diff)
+* [Editor's Copy](https://Janfred.github.io/draft-ietf-emu-eap-fido/#go.draft-ietf-emu-eap-fido.html)
+* [Datatracker Page](https://datatracker.ietf.org/doc/draft-ietf-emu-eap-fido)
+* [Individual Draft](https://datatracker.ietf.org/doc/html/draft-ietf-emu-eap-fido)
+* [Compare Editor's Copy to Individual Draft](https://Janfred.github.io/draft-ietf-emu-eap-fido/#go.draft-ietf-emu-eap-fido.diff)
 
 
 ## Contributing
 
 See the
-[guidelines for contributions](https://github.com/Janfred/draft-janfred-eap-fido/blob/main/CONTRIBUTING.md).
+[guidelines for contributions](https://github.com/Janfred/draft-ietf-emu-eap-fido/blob/main/CONTRIBUTING.md).
 
 Contributions can be made by creating pull requests.
 The GitHub interface supports creating pull requests using the Edit (✏) button.
