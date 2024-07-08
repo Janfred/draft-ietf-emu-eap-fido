@@ -1661,11 +1661,17 @@ C.1.  Change History
 
       -  Add first few paragraphs on error handling
 
-   draft-ietf-emu-eap-fido-00: > * First WG draft > * Update way FIDO
-   client data is concatenated (include protocol binding at the very
-   beginning) > * Change auth requirements attribute to array of ints or
-   text string, with text strings used for experimental features > *
-   Update IANA section for registry of auth requirement ints
+   draft-ietf-emu-eap-fido-00:
+
+      -  First WG draft
+
+      -  Update way FIDO client data is concatenated (include protocol
+         binding at the very beginning)
+
+      -  Change auth requirements attribute to array of ints or text
+         string, with text strings used for experimental features
+
+      -  Update IANA section for registry of auth requirement ints
 
 C.2.  Missing Specs
 
