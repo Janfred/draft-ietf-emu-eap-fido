@@ -5,8 +5,8 @@
 EAP Method Update                                         J.-F. Rieckers
 Internet-Draft                                                       DFN
 Intended status: Standards Track                               S. Winter
-Expires: 2 September 2024                                        RESTENA
-                                                            1 March 2024
+Expires: 9 January 2025                                          RESTENA
+                                                             8 July 2024
 
 
                                 EAP-FIDO
@@ -44,7 +44,7 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 September 2024.
+   This Internet-Draft will expire on 9 January 2025.
 
 Copyright Notice
 
@@ -82,6 +82,7 @@ Table of Contents
        4.2.1.  Message format
        4.2.2.  Protocol Sequence
      4.3.  FIDO authentication
+       4.3.1.  Authentication requirements
      4.4.  Error conditions
    5.  Implementation Guidelines
    6.  Design decisions
@@ -602,46 +603,46 @@ Table of Contents
 
                           Table 2: Message types
 
-   +========+=========+================+===============================+
-   | Mapkey | Type    | human-readable | Description                   |
-   |        |         | Label          |                               |
-   +========+=========+================+===============================+
-   | 0      | UTF-8   | Identity       | User Identity (usually        |
-   |        | String  |                | username)                     |
-   +--------+---------+----------------+-------------------------------+
-   | 1      | Byte    | Additional     | Additional Data to be         |
-   |        | String  | Client Data    | signed by the FIDO            |
-   |        |         |                | Authenticator                 |
-   +--------+---------+----------------+-------------------------------+
-   | 2      | Array   | PKIDs          | List of acceptable            |
-   |        | of Byte |                | Credential IDs                |
-   |        | Strings |                |                               |
-   +--------+---------+----------------+-------------------------------+
-   | 3      | Byte    | Auth Data      | Authdata according to         |
-   |        | String  |                | [WebAuthn], Section 6.1       |
-   +--------+---------+----------------+-------------------------------+
-   | 4      | Byte    | FIDO Signature |                               |
-   |        | String  |                |                               |
-   +--------+---------+----------------+-------------------------------+
-   | 5      | Array   | Authentication | Sent by the server to         |
-   |        | of      | requirements   | indicate the current          |
-   |        | UTF-8   |                | authentication                |
-   |        | Strings |                | requirements, i.e. if         |
-   |        |         |                | user presence or user         |
-   |        |         |                | verification is required      |
-   +--------+---------+----------------+-------------------------------+
-   | 6      | Byte    | PKID           | Needed to identify the        |
-   |        | String  |                | credential                    |
-   +--------+---------+----------------+-------------------------------+
-   | 7      | Integer | Error Code     | A code describing the         |
-   |        |         |                | error, see Section 4.4        |
-   |        |         |                | for a list of error           |
-   |        |         |                | codes                         |
-   +--------+---------+----------------+-------------------------------+
-   | 8      | UTF-8   | Error          | An optional human-            |
-   |        | String  | Description    | readable error                |
-   |        |         |                | description                   |
-   +--------+---------+----------------+-------------------------------+
+     +========+==========+================+==========================+
+     | Mapkey | Type     | human-readable | Description              |
+     |        |          | Label          |                          |
+     +========+==========+================+==========================+
+     | 0      | Text     | Identity       | User Identity (usually   |
+     |        | String   |                | username)                |
+     +--------+----------+----------------+--------------------------+
+     | 1      | Byte     | Additional     | Additional Data to be    |
+     |        | String   | Client Data    | signed by the FIDO       |
+     |        |          |                | Authenticator            |
+     +--------+----------+----------------+--------------------------+
+     | 2      | Array of | PKIDs          | List of acceptable       |
+     |        | Byte     |                | Credential IDs           |
+     |        | Strings  |                |                          |
+     +--------+----------+----------------+--------------------------+
+     | 3      | Byte     | Auth Data      | Authdata according to    |
+     |        | String   |                | [WebAuthn], Section 6.1  |
+     +--------+----------+----------------+--------------------------+
+     | 4      | Byte     | FIDO Signature |                          |
+     |        | String   |                |                          |
+     +--------+----------+----------------+--------------------------+
+     | 5      | Array of | Authentication | Sent by the server to    |
+     |        | Integers | requirements   | indicate the current     |
+     |        | or Text  |                | authentication           |
+     |        | Strings  |                | requirements, i.e. if    |
+     |        |          |                | user presence or user    |
+     |        |          |                | verification is required |
+     +--------+----------+----------------+--------------------------+
+     | 6      | Byte     | PKID           | Needed to identify the   |
+     |        | String   |                | credential               |
+     +--------+----------+----------------+--------------------------+
+     | 7      | Integer  | Error Code     | A code describing the    |
+     |        |          |                | error, see Section 4.4   |
+     |        |          |                | for a list of error      |
+     |        |          |                | codes                    |
+     +--------+----------+----------------+--------------------------+
+     | 8      | Text     | Error          | An optional human-       |
+     |        | String   | Description    | readable error           |
+     |        |          |                | description              |
+     +--------+----------+----------------+--------------------------+
 
                     Table 3: Mapkeys for the attributes
 
@@ -701,10 +702,7 @@ Table of Contents
       Server-Side Credentials are used.
 
    Authentication Requirements:  (Optional) A list of requirements for
-      the FIDO authentication.  The possible options for this version of
-      EAP-FIDO are "up" for requesting user presence and "uv" for
-      requesting user verification.  Clients MUST ignore any other
-      value, to ensure forward compatibility.
+      the FIDO authentication.  See {:auth_requirements} for details.
 
    Additional Client Data:  (Optional) Additional data to be signed by
       the FIDO Authenticator.
@@ -749,9 +747,10 @@ Table of Contents
    authentication, the client can send an information request message to
    the server.
 
-   This is the case if Server-Side Credentials are used, since the FIDO
-   Authenticator needs the list of acceptable Credential IDs to access
-   the actual credentials on the FIDO Authenticator.
+   my java client sent out an empty client certificate.This is the case
+   if Server-Side Credentials are used, since the FIDO Authenticator
+   needs the list of acceptable Credential IDs to access the actual
+   credentials on the FIDO Authenticator.
 
    With the information request the client can transmit additional
    information that help the server to compile this information.
@@ -871,17 +870,26 @@ Table of Contents
 
    The Relying Party ID (RPID) is explicitly configured in C_FIDO_RPID
 
-   The client data is a concatenation of two items.
+   The client data is a concatenation of three items.
 
-   The first item is derived from the TLS keying material:
+   The first item are 8 bytes with the values 0x45, 0x41, 0x50, 0x2d,
+   0x46, 0x49, 0x44, 0x4F (ASCII: "EAP-FIDO")
+
+   The second item is derived from the TLS keying material:
 
    FIDO_CHALLENGE_TLS = TLS-Exporter("fido challenge", NULL, 32)
 
-   The second item is the optional additional client data sent by the
+   The third item is the optional additional client data sent by the
    server.
 
-   Both items are concatenated and hashed using SHA-256.  The result is
-   the clientDataHash for the FIDO authentication.
+   All three items are concatenated and hashed using SHA-256.
+   // This has no crypto agility, as was correctly pointed out.  This
+   // part comes from the WebAuthn spec, where SHA-256 is fixed.  For
+   // EAP-FIDO we could opt for crypto agility, since the hashing
+   // algorithm is not neccesarily fixed.
+   //
+   // -- Janfred The result is the clientDataHash for the FIDO
+   authentication.
 
    TODO: format of Authentication Requirements and how to send them
    using CTAP
@@ -889,6 +897,27 @@ Table of Contents
    Completely TODO: Server side.  How to validate.  If up/uv was
    provided, even if not required, the server should update the "last
    up/uv seen" field for example.
+
+4.3.1.  Authentication requirements
+
+   CTAP allows different authentication requirements to be requested.
+   The server can request those by sending values in the authentication
+   requirements attribute with either the Authentication Request or the
+   Information Response message.
+
+   For standardized options, numerical values are used.  For
+   experimental use cases, implementations can use text strings.
+   Implementations MUST ignore text strings they do not recognize.
+
+   At the time of writing, the CTAP protocol has two authentication
+   options relevant to this specification: User Presence and User
+   Verification.
+
+   If the server includes a value of 1 in the Authentication
+   Requirements attribute array, the supplicant MUST require user
+   presence from the FIDO authenticator.  If the server includes a value
+   of 2, the supplicant MUST require user verification from the FIDO
+   authenticator.
 
 4.4.  Error conditions
 
@@ -1232,6 +1261,9 @@ Table of Contents
 
       -  Error codes, should be split with "Specification Required" and
          "Private use"
+
+      -  Authentication requirements, with ints as "Specification
+         Required" and text strings as "Private use" or "Experimental"
 
 11.  References
 
@@ -1628,6 +1660,12 @@ C.1.  Change History
          the RPID any more.
 
       -  Add first few paragraphs on error handling
+
+   draft-ietf-emu-eap-fido-00: > * First WG draft > * Update way FIDO
+   client data is concatenated (include protocol binding at the very
+   beginning) > * Change auth requirements attribute to array of ints or
+   text string, with text strings used for experimental features > *
+   Update IANA section for registry of auth requirement ints
 
 C.2.  Missing Specs
 
