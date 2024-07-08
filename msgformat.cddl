@@ -1,0 +1,73 @@
+start = bytes .cborseq eap-fido-outer-msg
+
+eap-fido-outer-msg = [
+    eap-fido-msg
+]
+
+eap-fido-msg //= ( msg_type: type_errormsg, payload_errormsg )
+eap-fido-msg //= ( msg_type: type_failure_indicator, payload_failure_indicator )
+eap-fido-msg //= ( msg_type: type_success_indicator )
+eap-fido-msg //= ( msg_type: type_auth_request, payload_auth_request )
+eap-fido-msg //= ( msg_type: type_auth_response, payload_auth_response )
+eap-fido-msg //= ( msg_type: type_info_request, payload_info_request )
+eap-fido-msg //= ( msg_type: type_info_response, payload_info_response )
+
+type_errormsg = -2
+payload_errormsg = {
+    element_error_code,
+    ?element_error_desc
+}
+
+type_failure_indicator = -1
+payload_failure_indicator = {
+    element_error_code,
+    ?element_error_desc
+}
+
+type_success_indicator = 0
+
+type_auth_request = 1
+payload_auth_request = {
+    ?element_pkids,
+    ?element_auth_requirements,
+    ?element_additional_client_data
+}
+
+type_auth_response = 2
+payload_auth_response = {
+    element_pkid,
+    element_auth_data,
+    element_fido_signature,
+}
+type_info_request = 3
+payload_info_request = {
+    element_identity
+}
+
+type_info_response = 4
+payload_info_response = {
+    ?element_pkids,
+    ?element_auth_requirements,
+    ?element_additional_client_data
+}
+
+element_identity = ( 0: text )
+element_additional_client_data = ( 1: bytes )
+element_pkids = ( 2: [+bytes] )
+element_auth_data = ( 3: bytes )
+element_fido_signature = ( 4: bytes )
+element_auth_requirements = ( 5: [+auth_requirement] )
+element_pkid = ( 6: bytes )
+element_error_code = ( 7: error_code )
+element_error_desc = ( 8: text )
+
+auth_requirement = &(
+    user_presence: 1,
+    user_verification: 2,
+    experimental: text
+)
+
+error_code = &(
+    unexpected_message: 1,
+    insufficient_information: 2,
+)

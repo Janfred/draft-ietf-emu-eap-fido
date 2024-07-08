@@ -359,15 +359,15 @@ attributes:
 
 | Mapkey | Type | human-readable Label | Description |
 |--------|------|-------|-------------|
-| 0 | UTF-8 String | Identity | User Identity (usually username) |
+| 0 | Text String | Identity | User Identity (usually username) |
 | 1 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO Authenticator |
 | 2 | Array of Byte Strings | PKIDs | List of acceptable Credential IDs |
 | 3 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
 | 4 | Byte String | FIDO Signature | |
-| 5 | Array of UTF-8 Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, i.e. if user presence or user verification is required |
+| 5 | Array of Integers or Text Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, i.e. if user presence or user verification is required |
 | 6 | Byte String | PKID | Needed to identify the credential |
 | 7 | Integer | Error Code | A code describing the error, see {{error_conditions}} for a list of error codes |
-| 8 | UTF-8 String | Error Description | An optional human-readable error description |
+| 8 | Text String | Error Description | An optional human-readable error description |
 {: #mapkeys title="Mapkeys for the attributes"}
 
 We will now describe the meaning, format and required attributes for each message type.
@@ -405,7 +405,7 @@ PKIDs:
 : (Optional) A list of acceptable Credential IDs. This can be used to trigger a re-authentication of a specific credential or to provide a list of the Credential IDs for a specific user, if Server-Side Credentials are used.
 
 Authentication Requirements:
-: (Optional) A list of requirements for the FIDO authentication. The possible options for this version of EAP-FIDO are "up" for requesting user presence and "uv" for requesting user verification. Clients MUST ignore any other value, to ensure forward compatibility.
+: (Optional) A list of requirements for the FIDO authentication. See {:auth_requirements} for details.
 
 Additional Client Data:
 : (Optional) Additional data to be signed by the FIDO Authenticator.
@@ -508,20 +508,38 @@ The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with
 
 The Relying Party ID (RPID) is explicitly configured in `C_FIDO_RPID`
 
-The client data is a concatenation of two items.
+The client data is a concatenation of three items.
 
-The first item is derived from the TLS keying material:
+The first item are 8 bytes with the values 0x45, 0x41, 0x50, 0x2d, 0x46, 0x49, 0x44, 0x4F (ASCII: "EAP-FIDO")
+
+The second item is derived from the TLS keying material:
 
     FIDO_CHALLENGE_TLS = TLS-Exporter("fido challenge", NULL, 32)
 
-The second item is the optional additional client data sent by the server.
+The third item is the optional additional client data sent by the server.
 
-Both items are concatenated and hashed using SHA-256.
+All three items are concatenated and hashed using SHA-256.[^cryptoagility]{:jf}
 The result is the clientDataHash for the FIDO authentication.
+
+[^cryptoagility]: This has no crypto agility, as was correctly pointed out. This part comes from the WebAuthn spec, where SHA-256 is fixed. For EAP-FIDO we could opt for crypto agility, since the hashing algorithm is not neccesarily fixed.
 
 TODO: format of Authentication Requirements and how to send them using CTAP
 
 Completely TODO: Server side. How to validate. If up/uv was provided, even if not required, the server should update the "last up/uv seen" field for example.
+
+### Authentication requirements
+{: #auth_requirements }
+
+CTAP allows different authentication requirements to be requested.
+The server can request those by sending values in the `authentication requirements` attribute with either the Authentication Request or the Information Response message.
+
+For standardized options, numerical values are used. For experimental use cases, implementations can use text strings. Implementations MUST ignore text strings they do not recognize.
+
+At the time of writing, the CTAP protocol has two authentication options relevant to this specification: User Presence and User Verification.
+
+If the server includes a value of 1 in the Authentication Requirements attribute array, the supplicant MUST require user presence from the FIDO authenticator.
+If the server includes a value of 2, the supplicant MUST require user verification from the FIDO authenticator.
+
 
 ## Error conditions
 {: #error_conditions }
@@ -683,6 +701,7 @@ This document has IANA actions:
     * Message types, should probably be of policy "Specification Required"
     * Attributes, should be split with "Specification Required" and "Private use"
     * Error codes, should be split with "Specification Required" and "Private use"
+    * Authentication requirements, with ints as "Specification Required" and text strings as "Private use" or "Experimental"
 
 
 --- back
@@ -883,6 +902,13 @@ draft-janfred-eap-fido-02:
 > * Refine wording around server name verification
 > * Adjust message formats and attribute mapkeys to not transmit the RPID any more.
 > * Add first few paragraphs on error handling
+
+draft-ietf-emu-eap-fido-00:
+
+> * First WG draft
+> * Update way FIDO client data is concatenated (include protocol binding at the very beginning)
+> * Change auth requirements attribute to array of ints or text string, with text strings used for experimental features
+> * Update IANA section for registry of auth requirement ints
 
 ## Missing Specs
 
