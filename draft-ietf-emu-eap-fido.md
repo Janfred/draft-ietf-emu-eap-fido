@@ -3,7 +3,7 @@ title: "EAP-FIDO"
 abbrev: "EAP-FIDO"
 category: std
 
-docname: draft-janfred-eap-fido-latest
+docname: draft-ietf-emu-eap-fido-latest
 submissiontype: IETF
 v: 3
 area: "Security"
