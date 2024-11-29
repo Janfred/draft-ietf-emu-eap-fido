@@ -337,7 +337,11 @@ This section describes the message format and the protocol flow.
 
 ### Message format
 
-All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with one or two elements:
+All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with one or two elements.
+Each message of the inner authentication MUST be sent in a single TLS record.
+The length of the TLS record MUST match the length of the CBOR sequence.
+
+The elements are:
 
 type:
 : integer to indicate the message type. {{msgtypes}} contains a list of the different message types.

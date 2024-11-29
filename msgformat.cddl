@@ -1,9 +1,12 @@
-start = bytes .cborseq eap-fido-outer-msg
+start =  eap-fido-outer-msg
 
+; Encoded as a CBOR sequence
 eap-fido-outer-msg = [
     eap-fido-msg
 ]
 
+
+; Message type definitions with the respective attributes
 eap-fido-msg //= ( msg_type: type_errormsg, payload_errormsg )
 eap-fido-msg //= ( msg_type: type_failure_indicator, payload_failure_indicator )
 eap-fido-msg //= ( msg_type: type_success_indicator )
@@ -12,20 +15,25 @@ eap-fido-msg //= ( msg_type: type_auth_response, payload_auth_response )
 eap-fido-msg //= ( msg_type: type_info_request, payload_info_request )
 eap-fido-msg //= ( msg_type: type_info_response, payload_info_response )
 
+
+; Error message
 type_errormsg = -2
 payload_errormsg = {
     element_error_code,
     ?element_error_desc
 }
 
+; Failure indicator
 type_failure_indicator = -1
 payload_failure_indicator = {
     element_error_code,
     ?element_error_desc
 }
 
+; Success indicator
 type_success_indicator = 0
 
+; Authentication Request
 type_auth_request = 1
 payload_auth_request = {
     ?element_pkids,
@@ -33,17 +41,21 @@ payload_auth_request = {
     ?element_additional_client_data
 }
 
+; Authentication Response
 type_auth_response = 2
 payload_auth_response = {
     element_pkid,
     element_auth_data,
     element_fido_signature,
 }
+
+; Information Request
 type_info_request = 3
 payload_info_request = {
     element_identity
 }
 
+; Information Response
 type_info_response = 4
 payload_info_response = {
     ?element_pkids,
@@ -51,6 +63,7 @@ payload_info_response = {
     ?element_additional_client_data
 }
 
+; Attribute definitions
 element_identity = ( 0: text )
 element_additional_client_data = ( 1: bytes )
 element_pkids = ( 2: [+bytes] )
@@ -61,12 +74,14 @@ element_pkid = ( 6: bytes )
 element_error_code = ( 7: error_code )
 element_error_desc = ( 8: text )
 
+; Definition of authentication requirements
 auth_requirement = &(
     user_presence: 1,
     user_verification: 2,
     experimental: text
 )
 
+; Definition of error codes
 error_code = &(
     unexpected_message: 1,
     insufficient_information: 2,
