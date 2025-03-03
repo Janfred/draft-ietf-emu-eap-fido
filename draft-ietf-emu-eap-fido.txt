@@ -5,8 +5,8 @@
 EAP Method Update                                         J.-F. Rieckers
 Internet-Draft                                                       DFN
 Intended status: Standards Track                               S. Winter
-Expires: 2 June 2025                                             RESTENA
-                                                        29 November 2024
+Expires: 4 September 2025                                        RESTENA
+                                                            3 March 2025
 
 
                                 EAP-FIDO
@@ -44,11 +44,11 @@ Status of This Memo
    time.  It is inappropriate to use Internet-Drafts as reference
    material or to cite them other than as "work in progress."
 
-   This Internet-Draft will expire on 2 June 2025.
+   This Internet-Draft will expire on 4 September 2025.
 
 Copyright Notice
 
-   Copyright (c) 2024 IETF Trust and the persons identified as the
+   Copyright (c) 2025 IETF Trust and the persons identified as the
    document authors.  All rights reserved.
 
    This document is subject to BCP 78 and the IETF Trust's Legal
@@ -1133,9 +1133,9 @@ Table of Contents
       tunnels
 
    Since there already exist EAP methods that provide a TLS tunnel and
-   are capable of encapsulating further EAP methods, e.g.  EAP-PEAP,
-   EAP-TTLS or EAP-TEAP, the question arises, why this specification
-   does not focus solely on the FIDO exchange as a standalone EAP method
+   are capable of encapsulating further EAP methods, e.g. EAP-PEAP, EAP-
+   TTLS or EAP-TEAP, the question arises, why this specification does
+   not focus solely on the FIDO exchange as a standalone EAP method
    instead of re-specifying a new EAP-method that again makes use of
    EAP-TLS.
 
@@ -1231,7 +1231,7 @@ Table of Contents
 
    A token which is registered with User Verification (UV) on the
    contrary can be issued a UV challenge, which will require the
-   personal authentication factor used during registration (e.g.  PIN,
+   personal authentication factor used during registration (e.g. PIN,
    biometric).  While it may still be possible to transfer the token
    along with the authentication factor (say, USB Security Token and
    associated PIN), this behavior is then equivalent to directly sharing
@@ -1242,7 +1242,7 @@ Table of Contents
    Additionally, this prevents an attacker that came into possession of
    the FIDO token without consent/knowledge of the original owner from
    completing UV challenges, since they are missing the required
-   verification credential (i.e.  PIN or biometric).
+   verification credential (i.e. PIN or biometric).
 
    We want to emphasize that preventing users from transferring
    ownership is only possible if the used FIDO keys require biometric
@@ -1517,7 +1517,7 @@ B.1.  How to determine the FIDO Relying Party ID?
    to allow a simple and hard-to-mess-up-and-still-secure configuration.
    Both the client and the server have to agree on what the RPID is, in
    order for the FIDO authentication to succeed.  If there is a defined
-   relationship between the RPID and the certificate name (i.e.  SAN
+   relationship between the RPID and the certificate name (i.e. SAN
    needs to be a subrealm of the RPID), then the client needs to verify
    the certificate against exactly that.  When does the client do that?
    What security implications does that bring?  All these options need
