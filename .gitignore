@@ -17,7 +17,7 @@
 /versioned/
 Gemfile.lock
 archive.json
-draft-janfred-eap-fido.xml
+draft-ietf-emu-eap-fido.xml
 package-lock.json
 report.xml
 !requirements.txt
