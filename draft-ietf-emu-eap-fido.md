@@ -16,6 +16,7 @@ venue:
   group: "EAP Method Update"
   type: "Working Group"
   mail: "emu@ietf.org"
+  github: Janfred/draft-ietf-emu-eap-fido
 
 author:
   - name: Jan-Frederik Rieckers
@@ -36,6 +37,17 @@ author:
     email: stefan.winter@restena.lu
     abbrev: RESTENA
     uri: www.restena.lu
+  - name: Q Misell
+    org: AS207960 Cyfyngedig
+    abbrev: AS207960
+    street: 13 Pen-y-lan Terrace
+    city: Caerdydd
+    code: CF23 9EU
+    country: United Kingdom
+    email:
+      - q@as207960.net
+      - q@magicalcodewit.ch
+    uri: magicalcodewit.ch
 
 normative:
 
@@ -70,7 +82,7 @@ informative:
       org: IETF
     date: 2022-11-07
     target: https://datatracker.ietf.org/meeting/115/materials/minutes-115-emu-202211071530-00
-
+---
 
 --- abstract
 
@@ -334,121 +346,137 @@ After the TLS handshake is completed, the client and server perform the FIDO-exc
 
 This section describes the message format and the protocol flow.
 
-
 ### Message format
 
-All EAP-FIDO messages in the inner authentication consist of a CBOR sequence with one or two elements.
+All EAP-FIDO messages consist of a integer message type, optionally concatenated with a map of attributes.
+All elements are CBOR encoded. Note: this is not a CBOR sequence, but rather the binary concetenation of a CBOR
+integer and a CBOR map. This is illustrated in {{msgencoding}}
+
+~~~ aasvg
++--------------+-----------------------+
+| Message type | Attributes (optional) |
++--------------+-----------------------+
+~~~
+{: #msgencoding title="Message encoding layout"}
+
+If no attributes are transmitted, the attributes field MUST be set to an empty map, instead of omitting it completely;
+except in the case of a Success Indicator message where the attributes MUST always be omitted. Unrecognised attributes
+MUST be ignored.
+
 Each message of the inner authentication MUST be sent in a single TLS record.
 The length of the TLS record MUST match the length of the CBOR sequence.
 
-The elements are:
+The valid types for a message are enumerated in {{msgtypes}}.
 
-type:
-: integer to indicate the message type. {{msgtypes}} contains a list of the different message types.
-
-attributes:
-: a CBOR encoded map with attributes. A list of the different attributes, their assigned mapkey and the type are listed in {{mapkeys}}.
-  This element is omitted in the Success indicator message.
-
-| Type | Description | Sent by |
-|------|-------------|-----------|
-| -2   | Error | Both |
-| -1   | Failure indicator | Both |
-| 0    | Success indicator | Both |
-| 1    | Authentication Request | Server |
-| 2    | Authentication Response | Client |
-| 3    | Information Request | Client |
-| 4    | Information Response | Server |
+| Type | Description             | Sent by |
+|------|-------------------------|---------|
+| -2   | Error                   | Both    |
+| -1   | Failure Indicator       | Both    |
+| 0    | Success Indicator       | Both    |
+| 1    | Authentication Request  | Server  |
+| 2    | Authentication Response | Client  |
+| 3    | Information Request     | Client  |
+| 4    | Information Response    | Server  |
 {: #msgtypes title="Message types"}
 
-| Mapkey | Type | human-readable Label | Description |
-|--------|------|-------|-------------|
-| 0 | Text String | Identity | User Identity (usually username) |
-| 1 | Byte String | Additional Client Data | Additional Data to be signed by the FIDO Authenticator |
-| 2 | Array of Byte Strings | PKIDs | List of acceptable Credential IDs |
-| 3 | Byte String | Auth Data | Authdata according to {{WebAuthn}}, Section 6.1 |
-| 4 | Byte String | FIDO Signature | |
-| 5 | Array of Integers or Text Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, i.e. if user presence or user verification is required |
-| 6 | Byte String | PKID | Needed to identify the credential |
-| 7 | Integer | Error Code | A code describing the error, see {{error_conditions}} for a list of error codes |
-| 8 | Text String | Error Description | An optional human-readable error description |
-{: #mapkeys title="Mapkeys for the attributes"}
+The valid attributes, and their types, are enumerated in {{mapkeys}}.
 
-We will now describe the meaning, format and required attributes for each message type.
+| Map key | Type                              | Name                        | Description                                                                                                    |
+|---------|-----------------------------------|-----------------------------|----------------------------------------------------------------------------------------------------------------|
+| 0       | Text String                       | Identity                    | User Identity (usually username)                                                                               |
+| 1       | Byte String                       | Additional Client Data      | Additional Data to be signed by the FIDO Authenticator                                                         |
+| 2       | Array of Byte Strings             | Acceptable PKIDs            | List of acceptable Credential IDs                                                                              |
+| 3       | Byte String                       | Auth Data                   | Authdata according to {{WebAuthn}}, Section 6.1                                                                |
+| 4       | Byte String                       | FIDO Signature              |                                                                                                                |
+| 5       | Array of Integers or Text Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements, see {{auth_requirements}} valid values |
+| 6       | Byte String                       | PKID                        | Needed to identify the credential                                                                              |
+| 7       | Integer                           | Error Code                  | A code describing the error, see {{error_conditions}} for a list of error codes                                |
+| 8       | Text String                       | Error Description           | An optional human-readable error description                                                                   |
+| 9       | Array of Byte Strings             | Available PKIDs             | List of Credential IDs the client has available for authentication                                             |
+| 10      | Array of OIDs {{!RFC9090}}        | Acceptable hash algorithms  | List of hash algorithms the server is willing to accept, in order of preference                                |
+| 11      | OID                               | Hash algorithm              | The hash algorithm used by the client                                                                          |
+{: #mapkeys title="Map keys for the attributes"}
 
-#### Success indicator
+The meaning, format and permissible attributes for each message type are defined below.
+
+#### Success Indicator
+
+| Attribute | Required |
+|-----------|----------|
+| _None_    |          |
+{: #attr-success title="Permissible attributes for Success Indicator messages"}
 
 This message is the protected success indicator, as required by {{RFC9427, Section 5.2}}.
 It is sent by the server to indicate a successful authentication.
-Since EAP is a strict request-response based protocol, the client needs to reply to a success indicator sent by the server, so the server can send an EAP-Success message.
+Since EAP is a strict request-response based protocol, the client needs to reply to a success indicator sent by the server, to allow the server can send an EAP-Success message.
 The client will acknowledge the reception of this packet through the acknowledgement mechanism in EAP-TLS with an EAP-TLS acknowledgement packet.
 
-To achieve the compatibility with the protected success indication mechanism of other EAP methods, the attributes field of the message MUST be omitted, that is, this message is only one byte with the value of 0x00.
+To achieve the compatibility with the protected success indication mechanism of other EAP methods, the attributes field of the message MUST be omitted, that is, this message is only one byte with the value of `0x00`.
 
-#### Failure indicator
+#### Failure Indicator
+
+| Attribute         | Required |
+|-------------------|----------|
+| Error code        | Y        |
+| Error description | N        |
+{: #attr-failure title="Permissible attributes for Failure Indicator messages"}
 
 A failure indicator message signals a non-recoverable error condition for the current authentication exchange.
 
-The attributes field of the message MUST contain at least the Error Code attribute with an error code describing the error and MAY contain the Error Description attribute with a human-readable error description.
-
 #### Error
+
+| Attribute         | Required |
+|-------------------|----------|
+| Error code        | Y        |
+| Error description | N        |
+{: #attr-error title="Permissible attributes for Error messages"}
 
 The Error message signals an error condition and can be sent both from client to server and vice versa.
 This error condition does not necessarily lead to an authentication failure, since the EAP-FIDO server may decide that the previous authentication is sufficient. (See {{examples_2hgracetime}} for an example for this use case)
 
-The attributes field MUST contain at least the Error Code attribute with an error code describing the error and MAY contain an Error Description attribute with a human-readable error description.
-
 #### Authentication Request
+
+| Attribute                   | Required |
+|-----------------------------|----------|
+| Acceptable PKIDs            | N        |
+| Authentication requirements | N        |
+| Additional client data      | N        |
+| Acceptable hash algorithms  | Y        |
+{: #attr-auth-req title="Permissible attributes for Authentication Request messages"}
 
 An authentication request is sent by the server to initialize a new authentication request.
 With this request, the server sends along information that the client needs to perform the FIDO authentication.
-
-The attributes field in the authentication request message contain the following attributes:
-
-PKIDs:
-: (Optional) A list of acceptable Credential IDs. This can be used to trigger a re-authentication of a specific credential or to provide a list of the Credential IDs for a specific user, if Server-Side Credentials are used.
-
-Authentication Requirements:
-: (Optional) A list of requirements for the FIDO authentication. See {:auth_requirements} for details.
-
-Additional Client Data:
-: (Optional) Additional data to be signed by the FIDO Authenticator.
-
-If no attributes are transmitted, the attributes field MUST be set to an empty map, instead of omitting it completely.
 
 Since this packet signals the start of a new authentication, the client MUST initialize a new authentication and MUST NOT reuse information from any previous authentication attempt, even if the previous authentication exchange was not completed.
 It MAY cache some data to perform sanity checks, i.e. to protect itself against misbehaving servers that try to re-initialize an authentication with the same parameters multiple times.
 
 #### Authentication Response
 
-If a client has sufficient information to perform a FIDO authentication, the client sends an authentication response. The authentication response signifies the completion of one authentication.
-This message can be sent in response to either an Authentication Request or an Information Response.
+| Attribute      | Required |
+|----------------|----------|
+| PKID           | Y        |
+| Auth Data      | Y        |
+| FIDO Signature | Y        |
+| Hash algorithm | Y        |
+{: #attr-auth-resp title="Permissible attributes for Authentication Response messages"}
 
-The attributes field in the authentication response message contain the following attributes:
-PKID:
-: The Credential ID of the FIDO Credential used to generate the signature.
-
-Auth Data:
-: The signed auth data as returned from the FIDO Authenticator (see {{FIDO-CTAP2}}, Section 6.2)
-
-FIDO Signature:
-: The signature as returned from the FIDO Authenticator (see {{FIDO-CTAP2}}, Section 6.2)
-
-
-All three attributes MUST be present in the authentication response message.
+If a client has sufficient information to perform a FIDO authentication, the client sends an authentication response.
+The authentication response signifies the completion of one authentication.
 
 #### Information Request
 
+| Attribute       | Required |
+|-----------------|----------|
+| Identity        | N        |
+| Available PKIDs | N        |
+{: #attr-info-req title="Permissible attributes for Information Request messages"}
+
 If a client does not have sufficient information to perform the FIDO authentication, the client can send an information request message to the server.
-
 This is the case if Server-Side Credentials are used, since the FIDO Authenticator needs the list of acceptable Credential IDs to access the actual credentials on the FIDO Authenticator.
-
 With the information request the client can transmit additional information that help the server to compile this information.
 
-The attributes field in the information request contains the following attributes:
-
-Identity:
-: The identity of the user (usually a username, configured in `C_IDENTITY`)
+If a client has multiple discoverable credentials available, it MAY send an Information Request with a list of Available PKIDs to have
+the server indicate which it finds acceptable.
 
 A client MUST NOT send an Information Request packet twice for one authentication.
 If a client does not get sufficient information to perform the FIDO authentication after the first Information Request and the subsequent Information Response, the client will not get more information by asking the server a second time.
@@ -458,16 +486,61 @@ A server MUST respond with a Failure Indicator message if it receives an Informa
 
 #### Information Response
 
-The server answers to an Information Request from the client with an Information Response.
+| Attribute                   | Required |
+|-----------------------------|----------|
+| Acceptable PKIDs            | N        |
+| Authentication requirements | N        |
+| Additional client data      | N        |
+| Acceptable hash algorithms  | N        |
+{: #attr-info-resp title="Permissible attributes for Information Response messages"}
 
+The server answers to an Information Request from the client with an Information Response.
 This packet is used to transmit additional information to the client.
 
-The attributes field in the information response can contain any attribute that is also allowed in the Authentication Request packet.
-If an attribute was both present in the Authentication Request and the Information Response packet, the client MUST discard the previous value(s) of this attribute that were sent in the Authentication Request and use the value(s) in the Information Response packet.
+If an attribute was both present in the Authentication Request and the Information Response packet,
+the client MUST discard the previous value(s) of this attribute that were sent in the Authentication Request
+and use the value(s) in the Information Response packet.
 
-A server MUST NOT send an Information Response packet twice for one authentication. A client MUST respond with a Failure Indicator message if it receives an Information Response packet when it does not expect one.
+A server MUST NOT send an Information Response packet twice for one authentication.
+A client MUST respond with a Failure Indicator message if it receives an Information Response packet when it does not expect one.
 
 ### Protocol Sequence
+
+~~~ aasvg
++-------------------------+                     .----------------------------------------------.
+|         Server          |------------------->|                    Client                      |
+| Authentication Request  |                    | Enough information to perform authentication?  |
++-------------------------+                     '----------------------------------------------'
+                                                    /                 |
+                                                  Yes                 No
+                                                  /                   |
+             +-----------------------------------+                    v
+             |                                             +---------------------+
+             v                                             |       Client        |
+ .----------------------.                                  | Information Request |
+|         Client         |<----------+                     +---------------------+
+| Perform authentication |           |                                |
+ '----------------------'            |                                v
+             |                       |                     +----------------------+
+             v                       |                     |        Server        |
++-------------------------+          |                     | Information Response |
+|         Client          |          |                     +----------------------+
+| Authentication Response |          |                                |
++-------------------------+          |                                v
+             |          \            |          .----------------------------------------------.
+             v           \           +---Yes---|                    Client                      |
+        +---------+       \                    | Enough information to perform authentication?  |
+        | Server  |        \                    '----------------------------------------------'
+        | Success |         v                                         |
+        +---------+     +--------+                                    No
+             |          | Server |                                    |
+             v          | Error  |                                    v
+        +---------+     +--------+                                +--------+
+        | Client  |                                               | Client |
+        | Success |                                               | Error  |
+        +---------+                                               +--------+
+~~~
+{: #proto-seq title="Diagram illustrating the protocol sequence"}
 
 The FIDO exchange phase starts with the server sending an authentication request to the client.
 This message is sent along with the last message of the server's TLS handshake.
@@ -508,7 +581,8 @@ This section will describe the actual FIDO authentication process, that is perfo
 
 (currently mainly a sub, more text is TODO)
 
-The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with the FIDO Authenticator.
+The client will use CTAP version 2.0 or above {{FIDO-CTAP2}} to communicate with the FIDO Authenticator,
+or a platform native library - e.g. `webauthn.h` on Micrsoft Windows.
 
 The Relying Party ID (RPID) is explicitly configured in `C_FIDO_RPID`
 
@@ -523,10 +597,8 @@ The second item is derived from the TLS keying material:
 The third item is the optional additional client data sent by the server.
 If the server did not send additional client data, this is omitted.
 
-All three items are concatenated and hashed using SHA-256.[^cryptoagility]{:jf}
+All three items are concatenated and hashed using one of the algorithms indicated as acceptable by the server.
 The result is the clientDataHash for the FIDO authentication.
-
-[^cryptoagility]: This has no crypto agility, as was correctly pointed out. This part comes from the WebAuthn spec, where SHA-256 is fixed. For EAP-FIDO we could opt for crypto agility, since the hashing algorithm is not neccesarily fixed.
 
 TODO: format of Authentication Requirements and how to send them using CTAP
 
@@ -545,16 +617,16 @@ At the time of writing, the CTAP protocol has two authentication options relevan
 If the server includes a value of 1 in the Authentication Requirements attribute array, the supplicant MUST require user presence from the FIDO authenticator.
 If the server includes a value of 2, the supplicant MUST require user verification from the FIDO authenticator.
 
-
 ## Error conditions
 {: #error_conditions }
 
 TODO, only a stub, not yet finished.
 
 Errors can be non-recoverable, or recoverable.
+Non-recoverable errors are indicated by values < 0, recoverable errors are indicated by values > 0.
 If an error is non-recoverable, then it MUST only appear in a Failure Indication message.
-If an error is recoverable, the peer may decide whether or not the current error condition is non-recoverable or not.
-These errors can be included in both the Failure Indication message and the Error message.
+If an error is recoverable, the peer may decide whether the current error condition is recoverable or not.
+Recoverable errors can be included in both the Failure Indication message and the Error message.
 
 An example of a non-recoverable error is the Unexpected Message error.
 In this case either the other peer is misbehaving or they have a different state, in both cases, a successful authentication is not possible.
@@ -566,11 +638,16 @@ A client MAY also choose to send this error within the Error message, in which c
 
 In this table are some error conditions, the list is not yet complete and not ordered.
 
-| Error code | non-recoverable | human-readable Label | Description |
-|---|---|---|---|
-| ? | no | No username configured | The client configuration had no username configured and no Discoverable Credential was available. |
-| ? | yes | Unexpected Message | The client or server received an unexpected message. Either one of the peers is misbehaving or they use incompatible versions. Either way, a successful authentication is not possible under these circumstances. |
-| ? | no | Insufficient Information | The client did not have sufficient information to perform a FIDO authentication. |
+| Error code | Human readable Label                  | Description                                                                                                                                                                                                                  |
+|------------|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| -1         | Unexpected Message                    | The client or server received an unexpected or invalid message. Either one of the peers is misbehaving or they use incompatible versions. Either way, a successful authentication is not possible under these circumstances. |
+| -2         | No further information provided       | The client sent an Information Request which provided no additional information to help the server select a credential for the client to use.                                                                                |
+| -3         | Internal error                        | An error has occurred preventing a party from continuing with the exchange.                                                                                                                                                  |
+| 1          | No username configured                | The client configuration had no username configured and no Discoverable Credential was available.                                                                                                                            |
+| 2          | Insufficient Information              | The client did not have sufficient information to perform a FIDO authentication.                                                                                                                                             |
+| 3          | Authentication requirements not met   | The authentication response provided by the client did not fulfill the requirements set by the server - e.g. the authenticator did not attest to user presence when the server requested it.                                 |
+| 4          | No suitable hash algorithm available  | The client does not support any of the hashing algorithms deemed acceptable by the server                                                                                                                                    |
+{: #error_codes title="Error codes and their descriptions" }
 
 # Implementation Guidelines
 
@@ -669,6 +746,8 @@ There is one early prototype proof-of-concept implementation of EAP-FIDO into ho
 The implementation was done before the specification of this draft was finished and is therefore not compatible with any draft version (different message format, simplified message flow, missing security checks), but serves as a proof-of-concept for the overall principle of using FIDO to perform an eduroam login.
 The source code can be found under [https://git.rieckers.it/rieckers/hostap/-/tree/eap_fido_poc_tnc23](https://git.rieckers.it/rieckers/hostap/-/tree/eap_fido_poc_tnc23)
 
+A server-side implementation as a FreeRadius module has been provided by Q Misell. The source code can be found under [github.molgen.mpg.de/q/eap-fido](https://github.molgen.mpg.de/q/eap-fido).
+
 # Security Considerations
 
 TODO Security
@@ -699,15 +778,139 @@ We want to emphasize that preventing users from transferring ownership is only p
 
 # IANA Considerations
 
-This document has IANA actions:
+## EAP-FIDO type code
 
-* EAP type code point for EAP-FIDO
-* EAP-FIDO registry
-    * Message types, should probably be of policy "Specification Required"
-    * Attributes, should be split with "Specification Required" and "Private use"
-    * Error codes, should be split with "Specification Required" and "Private use"
-    * Authentication requirements, with ints as "Specification Required" and text strings as "Private use" or "Experimental"
+The IANA is requested to make the following assignment in the EAP "Method Types" registry {{RFC3748}}.
 
+| Value | Description | Reference     |
+|-------|-------------|---------------|
+| 57    | EAP-FIDO    | This document |
+{: title="New entry in the EAP Method Types registry" }
+
+## New registries
+
+The IANA is requested to create the following new registries:
+
+- EAP-FIDO message types
+- EAP-FIDO attributes
+- EAP-FIDO error codes
+- EAP-FIDO authentication requirements
+
+### EAP-FIDO Message Types
+
+This registry contains the kinds of messages that be sent between parties in an EAP-FIDO exchange.
+
+Template:
+
+* Type: an integer identifying the message type
+* Description: a textual description of the message type
+* Sent by: one of
+  - Client
+  - Server
+  - Both
+* Allowed attributes: a list of attributes that may be sent with this message
+* Reference: where this message type is defined
+
+Initial contents: as defined in {{msgtypes}}.
+
+| Type | Description             | Sent by | Allowed attributes                                                    | Reference     |
+|------|-------------------------|---------|-----------------------------------------------------------------------|---------------|
+| -2   | Error                   | Both    | Error code, error message                                             | This document |
+| -1   | Failure Indicator       | Both    | Error code, error message                                             | This document |
+| 0    | Success Indicator       | Both    |                                                                       | This document |
+| 1    | Authentication Request  | Server  | Acceptable PKIDs, authentication requirements, additional client data | This document |
+| 2    | Authentication Response | Client  | PKID, auth data, FIDO signature                                       | This document |
+| 3    | Information Request     | Client  | Identity, available PKIDs                                             | This document |
+| 4    | Information Response    | Server  | Acceptable PKIDs, authentication requirements, additional client data | This document |
+{: title="Initial contents of the EAP-FIDO Message Types registry" }
+
+Message types -24 to 23 are allocated under Standards Action.
+Message types -256 to -25 and 24 to 255 are allocated on the advice of a Designated Expert, with Specification Required.
+Other message types are allocated on a first-come first-served basis.
+
+### EAP-FIDO Attributes
+
+This registry contains the attributes that be sent between parties in an EAP-FIDO exchange.
+
+Template:
+
+* Map key: an integer identifying the attribute
+* Type: what CBOR type is used to encode this attribute
+* Name: a human-readable attribute name
+* Description: a textual description of the attribute
+* Reference: where this message type is defined
+
+Initial contents: as defined in {{mapkeys}}.
+
+| Map key | Type                              | Name                        | Description                                                                     | Reference     |
+|---------|-----------------------------------|-----------------------------|---------------------------------------------------------------------------------|---------------|
+| 0       | Text String                       | Identity                    | User Identity (usually username)                                                | This document |
+| 1       | Byte String                       | Additional Client Data      | Additional Data to be signed by the FIDO Authenticator                          | This document |
+| 2       | Array of Byte Strings             | Acceptable PKIDs            | List of acceptable Credential IDs                                               | This document |
+| 3       | Byte String                       | Auth Data                   | Authdata according to {{WebAuthn}}, Section 6.1                                 | This document |
+| 4       | Byte String                       | FIDO Signature              |                                                                                 | This document |
+| 5       | Array of Integers or Text Strings | Authentication requirements | Sent by the server to indicate the current authentication requirements          | This document |
+| 6       | Byte String                       | PKID                        | Needed to identify the credential                                               | This document |
+| 7       | Integer                           | Error Code                  | A code describing the error, see {{error_conditions}} for a list of error codes | This document |
+| 8       | Text String                       | Error Description           | An optional human-readable error description                                    | This document |
+| 9       | Array of Byte Strings             | Available PKIDs             | List of Credential IDs the client has available for authentication              | This document |
+| 10      | Array of OIDs                     | Acceptable hash algorithms  | List of hash algorithms the server is willing to accept, in order of preference | This document |
+| 11      | OID                               | Hash algorithm              | The hash algorithm used by the client                                           | This document |
+{: title="Initial contents of the EAP-FIDO Attributes registry" }
+
+Map keys 0 to 23 are allocated under Standards Action.
+Map keys and 24 to 255 are allocated on the advice of a Designated Expert, with Specification Required.
+Other map keys are allocated on a first-come first-served basis.
+
+### EAP-FIDO Error Codes
+
+This registry contains the error codes that be sent between parties in an EAP-FIDO exchange.
+
+Template:
+
+* Error code: an integer identifying the error code
+* Name: a human-readable attribute name
+* Description: a textual description of the error
+* Reference: where this message type is defined
+
+Initial contents: as defined in {{error_codes}}.
+
+| Error code | Name                                 | Description                                                                                                                                                                                                                  | Reference     |
+|------------|--------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|---------------|
+| -1         | Unexpected Message                   | The client or server received an unexpected or invalid message. Either one of the peers is misbehaving or they use incompatible versions. Either way, a successful authentication is not possible under these circumstances. | This document |
+| -2         | No further information provided      | The client sent an Information Request which provided no additional information to help the server select a credential for the client to use.                                                                                | This document |
+| -3         | Internal error                       | An error has occurred preventing a party from continuing with the exchange.                                                                                                                                                  | This document |
+| 1          | No username configured               | The client configuration had no username configured and no Discoverable Credential was available.                                                                                                                            | This document |
+| 2          | Insufficient Information             | The client did not have sufficient information to perform a FIDO authentication.                                                                                                                                             | This document |
+| 3          | Authentication requirements not met  | The authentication response provided by the client did not fulfill the requirements set by the server - e.g. the authenticator did not attest to user presence when the server requested it.                                 | This document |
+| 4          | No suitable hash algorithm available | The client does not support any of the hashing algorithms deemed acceptable by the server                                                                                                                                    | This document |
+{: title="Initial contents of the EAP-FIDO Error Codes registry" }
+
+Error codes -24 to 23 are allocated under Standards Action.
+Error codes -256 to -25 and 24 to 255 are allocated on the advice of a Designated Expert, with Specification Required.
+Other error codes are allocated on a first-come first-served basis.
+
+### EAP-FIDO Authentication Requirements
+
+This registry contains the authentication requirements a server can demand of a client.
+
+Template:
+
+* Code: an integer identifying the requirement
+* Name: a human-readable requirement name
+* Reference: where this message type is defined
+
+Initial contents: as defined in {{auth_requirements}}.
+
+| Code | Name              | Reference     |
+|------|-------------------|---------------|
+| 1    | User presence     | This document |
+| 2    | User verification | This document |
+{: title="Initial contents of the EAP-FIDO Authentication Requirement registry" }
+
+Codes 0 to 23 are allocated under Standards Action.
+Codes and 24 to 255 are allocated on the advice of a Designated Expert, with Specification Required.
+Other codes are allocated on a first-come first-served basis.
 
 --- back
 
