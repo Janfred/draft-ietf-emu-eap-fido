@@ -1,6 +1,6 @@
 {
   "magic": "E!vIA5L86J2I",
-  "timestamp": "2025-03-25T01:26:45.575479+00:00",
+  "timestamp": "2025-03-27T01:25:56.558515+00:00",
   "repo": "Janfred/draft-ietf-emu-eap-fido",
   "labels": [
     {
@@ -63,7 +63,7 @@
       "labels": [],
       "body": "This is a bit of a big PR, so apologies first.\r\n\r\nThe main purpose of this is to incorporate the changes we discussed at the hackathon, and tidy up a few bits, to make the draft easier to follow. \r\n\r\n- Clarify encoding of messages, as two concatenated CBOR objects\r\n- Add \"Available PKIDs\" to allow for the server to help select authenticators if multiple are present\r\n- Add \"Acceptable hash algorithms\" and \"Hash algorithm\" for crypto agility; this is supported even on the windows `webauthn.h` platform authenticator (with SHA-256, SHA-384, and SHA-512).\r\n- Add tables defining which attributes can be encoded in which messages\r\n- Add an example protocol flow diagram\r\n- Define error codes, as a first attempt\r\n- Add a reference to my FreeRadius implementation\r\n- Define IANA registries\r\n\r\nI've also added myself as an author, hope that's OK.\r\n\r\nFinally: given we now have two interoperable implementations I think it's time we request IANA register a method number. As 1-191 are merely specification required there's no reason not to do this with an I-D.",
       "createdAt": "2025-03-24T15:28:27Z",
-      "updatedAt": "2025-03-24T21:13:26Z",
+      "updatedAt": "2025-03-25T07:48:13Z",
       "baseRepository": "Janfred/draft-ietf-emu-eap-fido",
       "baseRefName": "main",
       "baseRefOid": "13d532c2543334f4a413f99cf18b6c5c0bc37750",
@@ -113,6 +113,26 @@
               "body": "It appears, that I conflated CBOR lists and CBOR sequences. Oops!\r\n\r\nI guess here is an idea place to put a reference to what a CBOR sequence is then.",
               "createdAt": "2025-03-24T21:13:26Z",
               "updatedAt": "2025-03-24T21:13:26Z"
+            }
+          ]
+        },
+        {
+          "id": "PRR_kwDOMTtXK86hsNZr",
+          "commit": {
+            "abbreviatedOid": "a08d6ec"
+          },
+          "author": "Janfred",
+          "authorAssociation": "OWNER",
+          "state": "COMMENTED",
+          "body": "",
+          "createdAt": "2025-03-25T07:48:13Z",
+          "updatedAt": "2025-03-25T07:48:13Z",
+          "comments": [
+            {
+              "originalPosition": 47,
+              "body": "Yep, I've already added it in my local working document, I'll push an update to the document soon.",
+              "createdAt": "2025-03-25T07:48:13Z",
+              "updatedAt": "2025-03-25T07:48:13Z"
             }
           ]
         }
